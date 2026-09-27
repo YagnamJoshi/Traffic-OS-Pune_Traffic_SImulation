@@ -27,7 +27,11 @@ export const THREAD_STATES = {
     BLOCKED: "BLOCKED",
     TERMINATED: "TERMINATED"
 };
-
+export const DEADLOCK_MODES = {
+    DETECTION: "DETECTION",
+    PREVENTION: "PREVENTION",
+    AVOIDANCE: "AVOIDANCE"
+};
 export const SCHEDULER_TYPES = {
     ROUND_ROBIN: "ROUND_ROBIN",
     PRIORITY: "PRIORITY",
@@ -246,13 +250,38 @@ export const state = {
     // DEADLOCK SYSTEM
     ///////////////////////////////////////////////////////
 
-    deadlock: {
+        deadlock: {
+
+        mode: DEADLOCK_MODES.DETECTION,
 
         detected: false,
+
+        detectedAt: null,
 
         graph: [],
 
         cycle: [],
+
+        locks: {},
+
+        waitFor: [],
+
+        resolutionMethod: null
+    },    deadlock: {
+
+        mode: DEADLOCK_MODES.DETECTION,
+
+        detected: false,
+
+        detectedAt: null,
+
+        graph: [],
+
+        cycle: [],
+
+        locks: {},
+
+        waitFor: [],
 
         resolutionMethod: null
     },

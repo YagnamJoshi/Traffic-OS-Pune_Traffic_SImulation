@@ -3,19 +3,6 @@
  * simulation.js
  *
  * MASTER SIMULATION ENGINE
- *
- * This file connects:
- *
- * Traffic
- * Processes
- * Scheduler
- * Memory
- * IPC
- * Emergency
- * Faults
- * Objectives
- * Analytics
- *
  ********************************************************************/
 
 import {
@@ -28,13 +15,16 @@ import {
     initializeDefaultProcesses,
     updateProcesses,
     failProcess,
-    createEmergencyProcess
+    createEmergencyProcess,
+    setPriority,
+    removeProcessCompletely
 } from "./processManager.js";
 
 import {
     initializeMemory,
     memoryTick,
-    allocateEmergencyMemory
+    allocateEmergencyMemory,
+    releaseMemory
 } from "./memoryManager.js";
 
 import {
@@ -55,6 +45,13 @@ import {
     spawnAuto
 } from "./traffic.js";
 
+import {
+    deadlockTick,
+    setDeadlockMode,
+    releaseAllLocks,
+    triggerDeadlockScenario as forceDeadlockScenario
+} from "./deadlock.js";
+
 /********************************************************************
  * INTERNAL ENGINE STATE
  ********************************************************************/
@@ -62,14 +59,8 @@ import {
 let lastFrameTime = 0;
 
 let emergencyRunning = false;
-
 let emergencyPhase = 0;
-
 let emergencyTimer = 0;
-
-let deadlockActive = false;
-
-let deadlockTimer = 0;
 
 let replayRecording = true;
 
@@ -80,13 +71,9 @@ let replayRecording = true;
 export function initializeSimulation() {
 
     initializeTrafficSystem();
-
     initializeMemory();
-
     initializeDefaultProcesses();
-
     startAutoSave();
-
     createInitialTraffic();
 
     generateEvent(
@@ -100,28 +87,11 @@ export function initializeSimulation() {
     updateActivityPanel();
 }
 
-/********************************************************************
- * VEHICLES ALREADY EXIST
- *
- * Makes city feel alive
- ********************************************************************/
-
 function createInitialTraffic() {
 
-    for (let i = 0; i < 25; i++) {
-
-        spawnVehicle();
-    }
-
-    for (let i = 0; i < 6; i++) {
-
-        spawnBus();
-    }
-
-    for (let i = 0; i < 10; i++) {
-
-        spawnAuto();
-    }
+    for (let i = 0; i < 25; i++) spawnVehicle();
+    for (let i = 0; i < 6; i++) spawnBus();
+    for (let i = 0; i < 10; i++) spawnAuto();
 
     generateEvent(
         "TRAFFIC",
@@ -139,31 +109,21 @@ function createInitialTraffic() {
 export function updateSimulation(deltaTime) {
 
     if (!state.running) return;
-
     if (state.paused) return;
 
     state.simulationTime += deltaTime;
 
     trafficTick();
-
     updateProcesses();
-
     schedulerTick();
-
     memoryTick();
-
     ipcTick();
+    deadlockTick();
 
     updateStatistics();
-
     updateObjectives();
-
     updateActivityPanel();
-
     updateEmergencyScenario();
-
-    updateDeadlockScenario();
-
     updateReplay();
 }
 
@@ -173,35 +133,24 @@ export function updateSimulation(deltaTime) {
 
 export function simulationLoop(timestamp) {
 
-    if (!lastFrameTime) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
 
-        lastFrameTime = timestamp;
-    }
-
-    const deltaTime =
-
-        (timestamp - lastFrameTime) /
-        1000;
+    const deltaTime = (timestamp - lastFrameTime) / 1000;
 
     lastFrameTime = timestamp;
 
-    updateSimulation(
-        deltaTime * state.speed
-    );
+    updateSimulation(deltaTime * state.speed);
 
-    requestAnimationFrame(
-        simulationLoop
-    );
+    requestAnimationFrame(simulationLoop);
 }
 
 /********************************************************************
- * START
+ * START / PAUSE / RESET
  ********************************************************************/
 
 export function startSimulation() {
 
     state.running = true;
-
     state.paused = false;
 
     generateEvent(
@@ -213,33 +162,52 @@ export function startSimulation() {
     );
 }
 
-/********************************************************************
- * PAUSE
- ********************************************************************/
-
 export function pauseSimulation() {
 
-    state.paused =
-        !state.paused;
+    state.paused = !state.paused;
 
     generateEvent(
         "SYSTEM",
         "Kernel",
-        state.paused
-            ? "Simulation paused."
-            : "Simulation resumed.",
+        state.paused ? "Simulation paused." : "Simulation resumed.",
         "System execution changed.",
         "System Control"
     );
 }
 
-/********************************************************************
- * RESET
- ********************************************************************/
-
 export function resetSimulation() {
 
     location.reload();
+}
+
+/********************************************************************
+ * USER-DRIVEN PROCESS CONTROLS
+ ********************************************************************/
+
+export function killProcess(pid) {
+
+    releaseMemory(pid);
+    releaseAllLocks(pid);
+    removeProcessCompletely(pid);
+}
+
+export function changeProcessPriority(pid, priority) {
+
+    setPriority(pid, priority);
+}
+
+/********************************************************************
+ * DEADLOCK CONTROLS
+ ********************************************************************/
+
+export function changeDeadlockMode(mode) {
+
+    setDeadlockMode(mode);
+}
+
+export function triggerDeadlockScenario() {
+
+    forceDeadlockScenario();
 }
 
 /********************************************************************
@@ -248,15 +216,10 @@ export function resetSimulation() {
 
 export function triggerEmergencyScenario() {
 
-    if (emergencyRunning) {
-
-        return;
-    }
+    if (emergencyRunning) return;
 
     emergencyRunning = true;
-
     emergencyPhase = 0;
-
     emergencyTimer = 0;
 
     generateEvent(
@@ -268,67 +231,42 @@ export function triggerEmergencyScenario() {
     );
 }
 
-/********************************************************************
- * EMERGENCY ENGINE
- ********************************************************************/
-
 function updateEmergencyScenario() {
 
-    if (!emergencyRunning) {
-
-        return;
-    }
+    if (!emergencyRunning) return;
 
     emergencyTimer++;
 
-    switch(emergencyPhase) {
+    switch (emergencyPhase) {
 
         case 0:
-
             spawnAmbulance();
-
             emergencyPhase++;
-
             break;
 
         case 1:
-
             if (emergencyTimer > 60) {
-
                 createEmergencyProcess();
-
                 emergencyPhase++;
             }
-
             break;
 
         case 2:
-
             if (emergencyTimer > 120) {
-
                 allocateEmergencyMemory();
-
                 emergencyPhase++;
             }
-
             break;
 
         case 3:
-
             if (emergencyTimer > 180) {
-
                 startEmergencyIPC();
-
                 emergencyPhase++;
-
-                state.achievements
-                    .firstEmergency = true;
+                state.achievements.firstEmergency = true;
             }
-
             break;
 
         case 4:
-
             if (emergencyTimer > 500) {
 
                 generateEvent(
@@ -339,72 +277,10 @@ function updateEmergencyScenario() {
                     "Priority Scheduling"
                 );
 
-                state.emergency.active =
-                    false;
-
-                emergencyRunning =
-                    false;
+                state.emergency.active = false;
+                emergencyRunning = false;
             }
-
             break;
-    }
-}
-
-/********************************************************************
- * DEADLOCK LAB
- ********************************************************************/
-
-export function triggerDeadlockScenario() {
-
-    deadlockActive = true;
-
-    deadlockTimer = 0;
-
-    state.deadlock.detected =
-        true;
-
-    state.statistics
-        .deadlocksDetected++;
-
-    generateEvent(
-        "DEADLOCK",
-        "Detector",
-        "Deadlock detected.",
-        "Circular dependency found.",
-        "Deadlock Detection"
-    );
-}
-
-/********************************************************************
- * UPDATE DEADLOCK
- ********************************************************************/
-
-function updateDeadlockScenario() {
-
-    if (!deadlockActive) {
-
-        return;
-    }
-
-    deadlockTimer++;
-
-    if (deadlockTimer > 300) {
-
-        deadlockActive = false;
-
-        state.deadlock.detected =
-            false;
-
-        state.statistics
-            .deadlocksResolved++;
-
-        generateEvent(
-            "DEADLOCK",
-            "Resolver",
-            "Deadlock resolved.",
-            "Resource cycle broken.",
-            "Deadlock Resolution"
-        );
     }
 }
 
@@ -431,10 +307,7 @@ export function triggerFailureScenario() {
 
 export function triggerRushHour() {
 
-    for (let i = 0; i < 60; i++) {
-
-        spawnVehicle();
-    }
+    for (let i = 0; i < 60; i++) spawnVehicle();
 
     generateEvent(
         "SCENARIO",
@@ -451,72 +324,17 @@ export function triggerRushHour() {
 
 function updateObjectives() {
 
-    if (
-        state.processes.length > 0
-    ) {
-
-        completeObjective(
-            "obj1"
-        );
-    }
-
-    if (
-        state.achievements
-            .firstEmergency
-    ) {
-
-        completeObjective(
-            "obj2"
-        );
-    }
-
-    if (
-        state.statistics
-            .ipcMessages > 0
-    ) {
-
-        completeObjective(
-            "obj3"
-        );
-    }
-
-    if (
-        state.statistics
-            .memoryAllocations > 0
-    ) {
-
-        completeObjective(
-            "obj4"
-        );
-    }
-
-    if (
-        state.statistics
-            .deadlocksDetected > 0
-    ) {
-
-        completeObjective(
-            "obj5"
-        );
-    }
-
-    if (
-        state.statistics
-            .deadlocksResolved > 0
-    ) {
-
-        completeObjective(
-            "obj6"
-        );
-    }
+    if (state.processes.length > 0) completeObjective("obj1");
+    if (state.achievements.firstEmergency) completeObjective("obj2");
+    if (state.statistics.ipcMessages > 0) completeObjective("obj3");
+    if (state.statistics.memoryAllocations > 0) completeObjective("obj4");
+    if (state.statistics.deadlocksDetected > 0) completeObjective("obj5");
+    if (state.statistics.deadlocksResolved > 0) completeObjective("obj6");
 }
 
 function completeObjective(id) {
 
-    const obj =
-        state.objectives.find(
-            o => o.id === id
-        );
+    const obj = state.objectives.find(o => o.id === id);
 
     if (!obj) return;
 
@@ -529,74 +347,43 @@ function completeObjective(id) {
 
 function updateActivityPanel() {
 
-    if (
-        state.deadlock.detected
-    ) {
+    if (state.deadlock.detected) {
 
         state.activityPanel = {
-
-            title:
-                "DEADLOCK DETECTED",
-
-            message:
-                "Processes are waiting for each other.",
-
-            concept:
-                "Deadlock Detection"
+            title: "DEADLOCK DETECTED",
+            message: "Processes are waiting for each other.",
+            concept: "Deadlock Detection"
         };
 
         return;
     }
 
-    if (
-        state.emergency.active
-    ) {
+    if (state.emergency.active) {
 
         state.activityPanel = {
-
-            title:
-                "EMERGENCY ACTIVE",
-
-            message:
-                "Green corridor is active.",
-
-            concept:
-                "Priority Scheduling"
+            title: "EMERGENCY ACTIVE",
+            message: "Green corridor is active.",
+            concept: "Priority Scheduling"
         };
 
         return;
     }
 
-    if (
-        state.traffic
-            .congestionPercent > 70
-    ) {
+    if (state.traffic.congestionPercent > 70) {
 
         state.activityPanel = {
-
-            title:
-                "HIGH CONGESTION",
-
-            message:
-                "Traffic queues are growing.",
-
-            concept:
-                "Resource Contention"
+            title: "HIGH CONGESTION",
+            message: "Traffic queues are growing.",
+            concept: "Resource Contention"
         };
 
         return;
     }
 
     state.activityPanel = {
-
-        title:
-            "NORMAL OPERATION",
-
-        message:
-            "Traffic operating normally.",
-
-        concept:
-            "Process Scheduling"
+        title: "NORMAL OPERATION",
+        message: "Traffic operating normally.",
+        concept: "Process Scheduling"
     };
 }
 
@@ -606,15 +393,10 @@ function updateActivityPanel() {
 
 function updateStatistics() {
 
-    state.statistics.peakCongestion =
-        Math.max(
-
-            state.statistics
-                .peakCongestion,
-
-            state.traffic
-                .congestionPercent
-        );
+    state.statistics.peakCongestion = Math.max(
+        state.statistics.peakCongestion,
+        state.traffic.congestionPercent
+    );
 }
 
 /********************************************************************
@@ -623,15 +405,9 @@ function updateStatistics() {
 
 function updateReplay() {
 
-    if (!replayRecording) {
+    if (!replayRecording) return;
 
-        return;
-    }
-
-    if (
-        state.replay.events.length >
-        1000
-    ) {
+    if (state.replay.events.length > 1000) {
 
         state.replay.events.shift();
     }
@@ -644,29 +420,11 @@ function updateReplay() {
 export function buildScenarioReport() {
 
     return {
-
-        responseTime:
-            state.statistics
-                .emergencyResponseTime,
-
-        vehiclesSpawned:
-            state.statistics
-                .vehiclesSpawned,
-
-        ipcMessages:
-            state.statistics
-                .ipcMessages,
-
-        memoryAllocations:
-            state.statistics
-                .memoryAllocations,
-
-        contextSwitches:
-            state.statistics
-                .contextSwitches,
-
-        congestion:
-            state.statistics
-                .peakCongestion
+        responseTime: state.statistics.emergencyResponseTime,
+        vehiclesSpawned: state.statistics.vehiclesSpawned,
+        ipcMessages: state.statistics.ipcMessages,
+        memoryAllocations: state.statistics.memoryAllocations,
+        contextSwitches: state.statistics.contextSwitches,
+        congestion: state.statistics.peakCongestion
     };
 }

@@ -48,6 +48,24 @@ let quantumTimer = 0;
  * enter the system.
  *****************************************************************/
 
+/*****************************************************************
+ * ALGORITHM CHANGE (user-controlled)
+ *****************************************************************/
+
+export function setSchedulerAlgorithm(algorithm) {
+
+    state.scheduler.algorithm = algorithm;
+
+    state.scheduler.currentThread = null;
+
+    generateEvent(
+        "SCHEDULER",
+        "Scheduler",
+        `Algorithm changed to ${algorithm}`,
+        "Short-term scheduler will now select threads using the new policy.",
+        "CPU Scheduling"
+    );
+}
 export function longTermScheduler() {
 
     const activeProcesses =

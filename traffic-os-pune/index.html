@@ -19,8 +19,6 @@
 
 <body>
 
-<!-- ===================================================== ============================================ -->
-
 <div id="bootScreen">
 
     <div class="boot-container">
@@ -37,17 +35,9 @@
 
 </div>
 
-<!-- ===================================================== -->
-<!-- APPLICATION -->
-<!-- ===================================================== -->
-
 <div
     id="application"
     style="display:none;">
-
-<!-- ===================================================== -->
-<!-- SIDEBAR -->
-<!-- ===================================================== -->
 
 <aside class="sidebar">
 
@@ -77,6 +67,10 @@
             IPC
         </button>
 
+        <button data-page="deadlock">
+            Deadlock Lab
+        </button>
+
         <button data-page="events">
             Event Log
         </button>
@@ -93,146 +87,65 @@
 
 </aside>
 
-<!-- ===================================================== -->
-<!-- MAIN CONTENT -->
-<!-- ===================================================== -->
-
 <main class="main-content">
-
-<!-- ===================================================== -->
-<!-- TOPBAR -->
-<!-- ===================================================== -->
 
 <header class="topbar">
 
     <div class="metric-card">
-
         CPU
-
-        <span id="cpuValue">
-            0%
-        </span>
-
+        <span id="cpuValue">0%</span>
     </div>
 
     <div class="metric-card">
-
         Memory
-
-        <span id="memoryValue">
-            0%
-        </span>
-
+        <span id="memoryValue">0%</span>
     </div>
 
     <div class="metric-card">
-
         Processes
-
-        <span id="processCount">
-            0
-        </span>
-
+        <span id="processCount">0</span>
     </div>
 
     <div class="metric-card">
-
         Threads
-
-        <span id="threadCount">
-            0
-        </span>
-
+        <span id="threadCount">0</span>
     </div>
 
     <div class="metric-card">
-
         Time
-
-        <span id="simulationTime">
-            0
-        </span>
-
+        <span id="simulationTime">0</span>
     </div>
 
     <div class="metric-card">
-
         Status
-
-        <span id="simulationStatus">
-            STOPPED
-        </span>
-
+        <span id="simulationStatus">STOPPED</span>
     </div>
 
 </header>
 
-<!-- ===================================================== -->
-<!-- CONTROL BAR -->
-<!-- ===================================================== -->
-
 <section class="controls">
 
-    <button id="btnStart">
-        Start
-    </button>
-
-    <button id="btnPause">
-        Pause
-    </button>
-
-    <button id="btnReset">
-        Reset
-    </button>
-
-    <button id="btnEmergency">
-        Emergency
-    </button>
-
-    <button id="btnRushHour">
-        Rush Hour
-    </button>
-
-    <button id="btnFailure">
-        Process Failure
-    </button>
-
-    <button id="btnDeadlock">
-        Deadlock
-    </button>
+    <button id="btnStart">Start</button>
+    <button id="btnPause">Pause</button>
+    <button id="btnReset">Reset</button>
+    <button id="btnEmergency">Emergency</button>
+    <button id="btnRushHour">Rush Hour</button>
+    <button id="btnFailure">Process Failure</button>
+    <button id="btnDeadlock">Force Deadlock Scenario</button>
 
 </section>
-
-<!-- ===================================================== -->
-<!-- SPEED -->
-<!-- ===================================================== -->
 
 <section class="speed-controls">
 
-    <button
-        data-speed="1"
-        class="active">
-
-        1x
-
-    </button>
-
-    <button data-speed="2">
-        2x
-    </button>
-
-    <button data-speed="5">
-        5x
-    </button>
-
-    <button data-speed="10">
-        10x
-    </button>
+    <button data-speed="1" class="active">1x</button>
+    <button data-speed="2">2x</button>
+    <button data-speed="5">5x</button>
+    <button data-speed="10">10x</button>
 
 </section>
 
 <!-- ===================================================== -->
-<!-- PAGE -->
+<!-- SIMULATION PAGE -->
 <!-- ===================================================== -->
 
 <section
@@ -247,25 +160,15 @@
 
         <div class="canvas-panel">
 
-            <canvas
-                id="trafficCanvas">
-            </canvas>
+            <canvas id="trafficCanvas"></canvas>
 
         </div>
 
         <div class="side-panel">
 
-            <div
-                id="activityPanel"
-                class="panel">
+            <div id="activityPanel" class="panel"></div>
 
-            </div>
-
-            <div
-                id="schedulerInfo"
-                class="panel">
-
-            </div>
+            <div id="schedulerInfo" class="panel"></div>
 
         </div>
 
@@ -285,27 +188,50 @@
         Process Management
     </h2>
 
+    <div class="panel">
+
+        <h3>Create Process</h3>
+
+        <div class="control-row">
+
+            <input
+                type="text"
+                id="newProcessName"
+                placeholder="Process name">
+
+            <input
+                type="number"
+                id="newProcessPriority"
+                placeholder="Priority (1-10)"
+                min="1" max="10" value="5">
+
+            <input
+                type="number"
+                id="newProcessMemory"
+                placeholder="Memory blocks"
+                min="1" value="2">
+
+            <button id="btnCreateProcess">Create</button>
+
+        </div>
+
+    </div>
+
     <table>
 
         <thead>
-
-        <tr>
-
-            <th>PID</th>
-            <th>Name</th>
-            <th>State</th>
-            <th>Priority</th>
-            <th>Threads</th>
-            <th>CPU</th>
-
-        </tr>
-
+            <tr>
+                <th>PID</th>
+                <th>Name</th>
+                <th>State</th>
+                <th>Priority</th>
+                <th>Threads</th>
+                <th>CPU</th>
+                <th>Actions</th>
+            </tr>
         </thead>
 
-        <tbody
-            id="processTableBody">
-
-        </tbody>
+        <tbody id="processTableBody"></tbody>
 
     </table>
 
@@ -325,40 +251,32 @@
 
     <div class="panel">
 
-        <h3>
-            Concepts Demonstrated
-        </h3>
+        <h3>Scheduling Algorithm</h3>
+
+        <div class="control-row">
+
+            <select id="schedulerAlgorithmSelect">
+                <option value="ROUND_ROBIN">Round Robin</option>
+                <option value="PRIORITY">Priority</option>
+                <option value="FCFS">FCFS</option>
+            </select>
+
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>Concepts Demonstrated</h3>
 
         <ul>
-
-            <li>
-                Long-Term Scheduler
-            </li>
-
-            <li>
-                Medium-Term Scheduler
-            </li>
-
-            <li>
-                Short-Term Scheduler
-            </li>
-
-            <li>
-                FCFS
-            </li>
-
-            <li>
-                Round Robin
-            </li>
-
-            <li>
-                Priority Scheduling
-            </li>
-
-            <li>
-                Context Switching
-            </li>
-
+            <li>Long-Term Scheduler</li>
+            <li>Medium-Term Scheduler</li>
+            <li>Short-Term Scheduler</li>
+            <li>FCFS</li>
+            <li>Round Robin</li>
+            <li>Priority Scheduling</li>
+            <li>Context Switching</li>
         </ul>
 
     </div>
@@ -377,11 +295,53 @@
         Memory Manager
     </h2>
 
-    <div
-        id="memoryGrid"
-        class="memory-grid">
+    <div class="panel">
+
+        <h3>Allocation Strategy</h3>
+
+        <div class="control-row">
+
+            <select id="memoryAlgorithmSelect">
+                <option value="FIRST_FIT">First Fit</option>
+                <option value="BEST_FIT">Best Fit</option>
+                <option value="WORST_FIT">Worst Fit</option>
+            </select>
+
+            <button id="btnCompactMemory">Compact Memory</button>
+
+        </div>
+
+        <h3 style="margin-top:16px;">Allocate</h3>
+
+        <div class="control-row">
+
+            <select id="memoryAllocPid"></select>
+
+            <input
+                type="number"
+                id="memoryAllocSize"
+                placeholder="Blocks"
+                min="1" value="2">
+
+            <button id="btnMemoryAlloc">Allocate</button>
+
+        </div>
+
+        <h3 style="margin-top:16px;">Free</h3>
+
+        <div class="control-row">
+
+            <select id="memoryFreePid"></select>
+
+            <button id="btnMemoryFree">Free</button>
+
+        </div>
+
+        <p class="hint">Tip: click any occupied block below to free it.</p>
 
     </div>
+
+    <div id="memoryGrid" class="memory-grid"></div>
 
 </section>
 
@@ -399,11 +359,23 @@
 
     <div class="panel">
 
-        <h3>
-            Message Queue
-        </h3>
+        <h3>Send Message</h3>
 
-        <div id="ipcQueue">
+        <div class="control-row">
+
+            <select id="ipcSender"></select>
+            <select id="ipcReceiver"></select>
+            <select id="ipcType"></select>
+
+            <button id="btnIpcSend">Send</button>
+
+        </div>
+
+        <div class="control-row" style="margin-top:10px;">
+
+            <button id="btnIpcPause">Pause Queue</button>
+            <button id="btnIpcResume">Resume Queue</button>
+            <button id="btnIpcClear">Clear Queue</button>
 
         </div>
 
@@ -411,25 +383,61 @@
 
     <div class="panel">
 
-        <h3>
-            IPC Concepts
-        </h3>
+        <h3>Message Queue</h3>
+
+        <div id="ipcQueue"></div>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>IPC Concepts</h3>
 
         <ul>
-
             <li>Message Passing</li>
-
             <li>Producer Consumer Model</li>
-
             <li>Message Queue</li>
-
             <li>Delivery Acknowledgement</li>
-
             <li>Emergency Coordination</li>
-
         </ul>
 
     </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- DEADLOCK LAB PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-deadlock"
+    class="page">
+
+    <h2>
+        Deadlock Lab
+    </h2>
+
+    <div class="panel">
+
+        <h3>Strategy</h3>
+
+        <div class="control-row">
+
+            <select id="deadlockModeSelect"></select>
+
+        </div>
+
+        <p class="hint">
+            Detection grants locks immediately and recovers by rolling back a victim.
+            Prevention enforces ascending resource ordering. Avoidance refuses any
+            request that could create a cycle. Junctions P01–P04 request each
+            other's locks on their own; use "Force Deadlock Scenario" above to
+            see the active strategy react immediately.
+        </p>
+
+    </div>
+
+    <div id="deadlockInfo" class="panel"></div>
 
 </section>
 
@@ -448,20 +456,14 @@
     <table>
 
         <thead>
-
-        <tr>
-
-            <th>Time</th>
-            <th>Type</th>
-            <th>Message</th>
-
-        </tr>
-
+            <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Message</th>
+            </tr>
         </thead>
 
-        <tbody id="eventLogBody">
-
-        </tbody>
+        <tbody id="eventLogBody"></tbody>
 
     </table>
 
@@ -482,181 +484,69 @@
     <div class="concept-grid">
 
         <div class="panel">
-
-            <h3>
-                CPU Scheduling
-            </h3>
-
+            <h3>CPU Scheduling</h3>
             <ul>
-
-                <li>
-                    Long-Term Scheduler
-                </li>
-
-                <li>
-                    Medium-Term Scheduler
-                </li>
-
-                <li>
-                    Short-Term Scheduler
-                </li>
-
-                <li>
-                    FCFS
-                </li>
-
-                <li>
-                    Round Robin
-                </li>
-
-                <li>
-                    Priority Scheduling
-                </li>
-
-                <li>
-                    Context Switching
-                </li>
-
+                <li>Long-Term Scheduler</li>
+                <li>Medium-Term Scheduler</li>
+                <li>Short-Term Scheduler</li>
+                <li>FCFS</li>
+                <li>Round Robin</li>
+                <li>Priority Scheduling</li>
+                <li>Context Switching</li>
             </ul>
-
         </div>
 
         <div class="panel">
-
-            <h3>
-                Process Management
-            </h3>
-
+            <h3>Process Management</h3>
             <ul>
-
-                <li>
-                    Process Control Block
-                </li>
-
-                <li>
-                    Process States
-                </li>
-
-                <li>
-                    Thread Management
-                </li>
-
-                <li>
-                    Process Recovery
-                </li>
-
-                <li>
-                    Fault Handling
-                </li>
-
+                <li>Process Control Block</li>
+                <li>Process States</li>
+                <li>Thread Management</li>
+                <li>Process Recovery</li>
+                <li>Fault Handling</li>
             </ul>
-
         </div>
 
         <div class="panel">
-
-            <h3>
-                Memory Management
-            </h3>
-
+            <h3>Memory Management</h3>
             <ul>
-
-                <li>
-                    First Fit
-                </li>
-
-                <li>
-                    Best Fit
-                </li>
-
-                <li>
-                    Worst Fit
-                </li>
-
-                <li>
-                    Fragmentation
-                </li>
-
-                <li>
-                    Memory Allocation
-                </li>
-
+                <li>First Fit</li>
+                <li>Best Fit</li>
+                <li>Worst Fit</li>
+                <li>Fragmentation</li>
+                <li>Memory Allocation</li>
             </ul>
-
         </div>
 
         <div class="panel">
-
-            <h3>
-                IPC
-            </h3>
-
+            <h3>IPC</h3>
             <ul>
-
-                <li>
-                    Message Passing
-                </li>
-
-                <li>
-                    Queue Management
-                </li>
-
-                <li>
-                    Producer Consumer
-                </li>
-
-                <li>
-                    Process Communication
-                </li>
-
+                <li>Message Passing</li>
+                <li>Queue Management</li>
+                <li>Producer Consumer</li>
+                <li>Process Communication</li>
             </ul>
-
         </div>
 
         <div class="panel">
-
-            <h3>
-                Deadlocks
-            </h3>
-
+            <h3>Deadlocks</h3>
             <ul>
-
-                <li>
-                    Detection
-                </li>
-
-                <li>
-                    Resolution
-                </li>
-
-                <li>
-                    Resource Contention
-                </li>
-
+                <li>Detection</li>
+                <li>Prevention</li>
+                <li>Avoidance</li>
+                <li>Resource Contention</li>
             </ul>
-
         </div>
 
         <div class="panel">
-
-            <h3>
-                Smart City Simulation
-            </h3>
-
+            <h3>Smart City Simulation</h3>
             <ul>
-
                 <li>Emergency Routing</li>
-
                 <li>Green Corridor</li>
-
                 <li>Traffic Congestion</li>
-
                 <li>Signal Control</li>
-
                 <li>Resource Coordination</li>
-
             </ul>
-
         </div>
 
     </div>
@@ -671,83 +561,37 @@
     id="page-developer"
     class="page">
 
-    <h2>
-        Developer
-    </h2>
+    <h2>Developer</h2>
 
     <div class="panel">
-
-        <h3>
-            Yagnam Sanket Joshi
-        </h3>
-
+        <h3>Yagnam Sanket Joshi</h3>
+        <p>Developer and System Designer</p>
         <p>
-            Developer and System Designer
+            TrafficOS Pune is a Smart City Operating System simulator
+            designed to demonstrate core OS concepts through a traffic
+            management game.
         </p>
-
-        <p>
-            TrafficOS Pune is a Smart City
-            Operating System simulator designed
-            to demonstrate core OS concepts
-            through a traffic management game.
-        </p>
-
     </div>
 
     <div class="panel">
-
-        <h3>
-            Github
-        </h3>
-
-        <p>
-            Add GitHub Profile Here
-        </p>
-
+        <h3>Github</h3>
+        <p>Add GitHub Profile Here</p>
     </div>
 
     <div class="panel">
-
-        <h3>
-            Portfolio
-        </h3>
-
-        <p>
-            Add Portfolio Link Here
-        </p>
-
+        <h3>Portfolio</h3>
+        <p>Add Portfolio Link Here</p>
     </div>
 
     <div class="panel">
-
-        <h3>
-            Future Enhancements
-        </h3>
-
+        <h3>Future Enhancements</h3>
         <ul>
-
-            <li>
-                AI Traffic Optimization
-            </li>
-
-            <li>
-                Multiplayer City Simulation
-            </li>
-
-            <li>
-                Advanced Deadlock Visualization
-            </li>
-
-            <li>
-                Detailed PCB Explorer
-            </li>
-
-            <li>
-                Real-Time Analytics Dashboard
-            </li>
-
+            <li>AI Traffic Optimization</li>
+            <li>Multiplayer City Simulation</li>
+            <li>Advanced Deadlock Visualization</li>
+            <li>Detailed PCB Explorer</li>
+            <li>Real-Time Analytics Dashboard</li>
         </ul>
-
     </div>
 
 </section>
@@ -756,28 +600,19 @@
 
 </div>
 
-<!-- ===================================================== -->
-<!-- MODULE ENTRY -->
-<!-- ===================================================== -->
-
 <script type="module" src="./js/app.js"></script>
 <script>
 
 if ("serviceWorker" in navigator) {
 
-    window.addEventListener(
-        "load",
-        () => {
+    window.addEventListener("load", () => {
 
-            navigator.serviceWorker.register(
-                "./service-worker.js"
-            );
+        navigator.serviceWorker.register("./service-worker.js");
 
-        }
-    );
+    });
 
 }
 
-</script>   
+</script>
 </body>
 </html>

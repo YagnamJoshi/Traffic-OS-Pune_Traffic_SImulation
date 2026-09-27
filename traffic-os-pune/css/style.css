@@ -530,3 +530,107 @@ td {
             repeat(4, 1fr);
     }
 }
+
+/* =====================================================
+   INTERACTIVE CONTROLS
+===================================================== */
+
+.control-row {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    align-items: center;
+}
+
+.control-row input,
+.control-row select {
+
+    background: var(--panel-2);
+
+    color: var(--text);
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    padding: 10px 12px;
+}
+
+.control-row button {
+
+    border: none;
+
+    padding: 10px 16px;
+
+    border-radius: 8px;
+
+    background: var(--blue);
+
+    color: white;
+
+    cursor: pointer;
+}
+
+.control-row button:hover {
+
+    opacity: 0.9;
+}
+
+.hint {
+
+    color: var(--muted);
+
+    font-size: 0.85rem;
+
+    margin-top: 10px;
+}
+
+.btn-small {
+
+    border: none;
+
+    padding: 4px 8px;
+
+    border-radius: 6px;
+
+    background: var(--panel-2);
+
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 0.75rem;
+
+    margin-right: 4px;
+}
+
+.btn-small:hover {
+
+    background: var(--blue);
+}
+
+.btn-danger {
+
+    background: var(--red);
+}
+
+.btn-danger:hover {
+
+    background: #dc2626;
+}
+
+.memory-block {
+
+    cursor: pointer;
+
+    transition: transform 0.15s;
+}
+
+.memory-block:hover {
+
+    transform: scale(1.05);
+}

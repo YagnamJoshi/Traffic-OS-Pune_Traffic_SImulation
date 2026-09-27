@@ -489,3 +489,70 @@ export function failProcess(pid) {
         );
     }
 }
+
+/*****************************************************************
+ * PRIORITY CHANGE (user-controlled)
+ *****************************************************************/
+
+export function setPriority(pid, priority) {
+
+    const process = getProcess(pid);
+
+    if (!process) return;
+
+    process.priority = Math.max(1, Math.min(10, priority));
+
+    process.threads.forEach(tid => {
+
+        const thread = getThread(tid);
+
+        if (thread) thread.priority = process.priority;
+    });
+
+    if (process.pcb) process.pcb.priority = process.priority;
+
+    generateEvent(
+        "PROCESS",
+        pid,
+        `${process.name} priority set to ${process.priority}`,
+        "Priority changed manually by user.",
+        "Priority Scheduling"
+    );
+}
+
+/*****************************************************************
+ * FULL REMOVAL (user-controlled)
+ *****************************************************************/
+
+export function removeProcessCompletely(pid) {
+
+    const process = getProcess(pid);
+
+    if (!process) return;
+
+    state.threads = state.threads.filter(t => t.pid !== pid);
+
+    state.scheduler.readyQueue =
+        state.scheduler.readyQueue.filter(tid => !process.threads.includes(tid));
+
+    state.scheduler.waitingQueue =
+        state.scheduler.waitingQueue.filter(tid => !process.threads.includes(tid));
+
+    state.scheduler.blockedQueue =
+        state.scheduler.blockedQueue.filter(tid => !process.threads.includes(tid));
+
+    if (process.threads.includes(state.scheduler.currentThread)) {
+
+        state.scheduler.currentThread = null;
+    }
+
+    state.processes = state.processes.filter(p => p.pid !== pid);
+
+    generateEvent(
+        "PROCESS",
+        pid,
+        `${process.name} removed.`,
+        "Process and its threads were deleted from the system by the user.",
+        "Process Termination"
+    );
+}
