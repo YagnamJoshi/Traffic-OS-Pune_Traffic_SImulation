@@ -1,0 +1,783 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+<title>TrafficOS Pune</title>
+
+<link
+    rel="stylesheet"
+    href="./css/style.css">
+    <meta name="theme-color" content="#10b981">
+</head>
+
+<body>
+
+<!-- ===================================================== ============================================ -->
+
+<div id="bootScreen">
+
+    <div class="boot-container">
+
+        <h1>TrafficOS Pune</h1>
+
+        <p>
+            Smart City Operating System Simulator
+        </p>
+
+        <div id="bootText"></div>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- APPLICATION -->
+<!-- ===================================================== -->
+
+<div
+    id="application"
+    style="display:none;">
+
+<!-- ===================================================== -->
+<!-- SIDEBAR -->
+<!-- ===================================================== -->
+
+<aside class="sidebar">
+
+    <h2>
+        TrafficOS Pune
+    </h2>
+
+    <nav>
+
+        <button data-page="simulation">
+            Simulation
+        </button>
+
+        <button data-page="processes">
+            Processes
+        </button>
+
+        <button data-page="scheduler">
+            Scheduler
+        </button>
+
+        <button data-page="memory">
+            Memory
+        </button>
+
+        <button data-page="ipc">
+            IPC
+        </button>
+
+        <button data-page="events">
+            Event Log
+        </button>
+
+        <button data-page="concepts">
+            OS Concepts
+        </button>
+
+        <button data-page="developer">
+            Developer
+        </button>
+
+    </nav>
+
+</aside>
+
+<!-- ===================================================== -->
+<!-- MAIN CONTENT -->
+<!-- ===================================================== -->
+
+<main class="main-content">
+
+<!-- ===================================================== -->
+<!-- TOPBAR -->
+<!-- ===================================================== -->
+
+<header class="topbar">
+
+    <div class="metric-card">
+
+        CPU
+
+        <span id="cpuValue">
+            0%
+        </span>
+
+    </div>
+
+    <div class="metric-card">
+
+        Memory
+
+        <span id="memoryValue">
+            0%
+        </span>
+
+    </div>
+
+    <div class="metric-card">
+
+        Processes
+
+        <span id="processCount">
+            0
+        </span>
+
+    </div>
+
+    <div class="metric-card">
+
+        Threads
+
+        <span id="threadCount">
+            0
+        </span>
+
+    </div>
+
+    <div class="metric-card">
+
+        Time
+
+        <span id="simulationTime">
+            0
+        </span>
+
+    </div>
+
+    <div class="metric-card">
+
+        Status
+
+        <span id="simulationStatus">
+            STOPPED
+        </span>
+
+    </div>
+
+</header>
+
+<!-- ===================================================== -->
+<!-- CONTROL BAR -->
+<!-- ===================================================== -->
+
+<section class="controls">
+
+    <button id="btnStart">
+        Start
+    </button>
+
+    <button id="btnPause">
+        Pause
+    </button>
+
+    <button id="btnReset">
+        Reset
+    </button>
+
+    <button id="btnEmergency">
+        Emergency
+    </button>
+
+    <button id="btnRushHour">
+        Rush Hour
+    </button>
+
+    <button id="btnFailure">
+        Process Failure
+    </button>
+
+    <button id="btnDeadlock">
+        Deadlock
+    </button>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- SPEED -->
+<!-- ===================================================== -->
+
+<section class="speed-controls">
+
+    <button
+        data-speed="1"
+        class="active">
+
+        1x
+
+    </button>
+
+    <button data-speed="2">
+        2x
+    </button>
+
+    <button data-speed="5">
+        5x
+    </button>
+
+    <button data-speed="10">
+        10x
+    </button>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-simulation"
+    class="page active">
+
+    <h2>
+        Live Pune Traffic Simulation
+    </h2>
+
+    <div class="simulation-grid">
+
+        <div class="canvas-panel">
+
+            <canvas
+                id="trafficCanvas">
+            </canvas>
+
+        </div>
+
+        <div class="side-panel">
+
+            <div
+                id="activityPanel"
+                class="panel">
+
+            </div>
+
+            <div
+                id="schedulerInfo"
+                class="panel">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- PROCESS PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-processes"
+    class="page">
+
+    <h2>
+        Process Management
+    </h2>
+
+    <table>
+
+        <thead>
+
+        <tr>
+
+            <th>PID</th>
+            <th>Name</th>
+            <th>State</th>
+            <th>Priority</th>
+            <th>Threads</th>
+            <th>CPU</th>
+
+        </tr>
+
+        </thead>
+
+        <tbody
+            id="processTableBody">
+
+        </tbody>
+
+    </table>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- SCHEDULER PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-scheduler"
+    class="page">
+
+    <h2>
+        CPU Scheduler
+    </h2>
+
+    <div class="panel">
+
+        <h3>
+            Concepts Demonstrated
+        </h3>
+
+        <ul>
+
+            <li>
+                Long-Term Scheduler
+            </li>
+
+            <li>
+                Medium-Term Scheduler
+            </li>
+
+            <li>
+                Short-Term Scheduler
+            </li>
+
+            <li>
+                FCFS
+            </li>
+
+            <li>
+                Round Robin
+            </li>
+
+            <li>
+                Priority Scheduling
+            </li>
+
+            <li>
+                Context Switching
+            </li>
+
+        </ul>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- MEMORY PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-memory"
+    class="page">
+
+    <h2>
+        Memory Manager
+    </h2>
+
+    <div
+        id="memoryGrid"
+        class="memory-grid">
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- IPC PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-ipc"
+    class="page">
+
+    <h2>
+        Inter Process Communication
+    </h2>
+
+    <div class="panel">
+
+        <h3>
+            Message Queue
+        </h3>
+
+        <div id="ipcQueue">
+
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>
+            IPC Concepts
+        </h3>
+
+        <ul>
+
+            <li>Message Passing</li>
+
+            <li>Producer Consumer Model</li>
+
+            <li>Message Queue</li>
+
+            <li>Delivery Acknowledgement</li>
+
+            <li>Emergency Coordination</li>
+
+        </ul>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- EVENT LOG PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-events"
+    class="page">
+
+    <h2>
+        System Event Log
+    </h2>
+
+    <table>
+
+        <thead>
+
+        <tr>
+
+            <th>Time</th>
+            <th>Type</th>
+            <th>Message</th>
+
+        </tr>
+
+        </thead>
+
+        <tbody id="eventLogBody">
+
+        </tbody>
+
+    </table>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- OS CONCEPTS PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-concepts"
+    class="page">
+
+    <h2>
+        Operating System Concepts Demonstrated
+    </h2>
+
+    <div class="concept-grid">
+
+        <div class="panel">
+
+            <h3>
+                CPU Scheduling
+            </h3>
+
+            <ul>
+
+                <li>
+                    Long-Term Scheduler
+                </li>
+
+                <li>
+                    Medium-Term Scheduler
+                </li>
+
+                <li>
+                    Short-Term Scheduler
+                </li>
+
+                <li>
+                    FCFS
+                </li>
+
+                <li>
+                    Round Robin
+                </li>
+
+                <li>
+                    Priority Scheduling
+                </li>
+
+                <li>
+                    Context Switching
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>
+                Process Management
+            </h3>
+
+            <ul>
+
+                <li>
+                    Process Control Block
+                </li>
+
+                <li>
+                    Process States
+                </li>
+
+                <li>
+                    Thread Management
+                </li>
+
+                <li>
+                    Process Recovery
+                </li>
+
+                <li>
+                    Fault Handling
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>
+                Memory Management
+            </h3>
+
+            <ul>
+
+                <li>
+                    First Fit
+                </li>
+
+                <li>
+                    Best Fit
+                </li>
+
+                <li>
+                    Worst Fit
+                </li>
+
+                <li>
+                    Fragmentation
+                </li>
+
+                <li>
+                    Memory Allocation
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>
+                IPC
+            </h3>
+
+            <ul>
+
+                <li>
+                    Message Passing
+                </li>
+
+                <li>
+                    Queue Management
+                </li>
+
+                <li>
+                    Producer Consumer
+                </li>
+
+                <li>
+                    Process Communication
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>
+                Deadlocks
+            </h3>
+
+            <ul>
+
+                <li>
+                    Detection
+                </li>
+
+                <li>
+                    Resolution
+                </li>
+
+                <li>
+                    Resource Contention
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>
+                Smart City Simulation
+            </h3>
+
+            <ul>
+
+                <li>Emergency Routing</li>
+
+                <li>Green Corridor</li>
+
+                <li>Traffic Congestion</li>
+
+                <li>Signal Control</li>
+
+                <li>Resource Coordination</li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- DEVELOPER PAGE -->
+<!-- ===================================================== -->
+
+<section
+    id="page-developer"
+    class="page">
+
+    <h2>
+        Developer
+    </h2>
+
+    <div class="panel">
+
+        <h3>
+            Yagnam Sanket Joshi
+        </h3>
+
+        <p>
+            Developer and System Designer
+        </p>
+
+        <p>
+            TrafficOS Pune is a Smart City
+            Operating System simulator designed
+            to demonstrate core OS concepts
+            through a traffic management game.
+        </p>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>
+            Github
+        </h3>
+
+        <p>
+            Add GitHub Profile Here
+        </p>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>
+            Portfolio
+        </h3>
+
+        <p>
+            Add Portfolio Link Here
+        </p>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>
+            Future Enhancements
+        </h3>
+
+        <ul>
+
+            <li>
+                AI Traffic Optimization
+            </li>
+
+            <li>
+                Multiplayer City Simulation
+            </li>
+
+            <li>
+                Advanced Deadlock Visualization
+            </li>
+
+            <li>
+                Detailed PCB Explorer
+            </li>
+
+            <li>
+                Real-Time Analytics Dashboard
+            </li>
+
+        </ul>
+
+    </div>
+
+</section>
+
+</main>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- MODULE ENTRY -->
+<!-- ===================================================== -->
+
+<script type="module" src="./js/app.js"></script>
+<script>
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            navigator.serviceWorker.register(
+                "./service-worker.js"
+            );
+
+        }
+    );
+
+}
+
+</script>   
+</body>
+</html>
