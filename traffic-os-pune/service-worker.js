@@ -18,6 +18,7 @@ const FILES_TO_CACHE = [
     "./js/ui.js",
     "./js/developer.js",
     "./js/processHub.js",
+    "./js/schedulerLab.js",
     "./js/osConcepts.js"
 ];
 

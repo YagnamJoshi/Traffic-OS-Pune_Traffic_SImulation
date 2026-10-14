@@ -41,6 +41,44 @@ import {
 
 let quantumTimer = 0;
 
+
+let schedulingTickCount = 0;
+let busyTickCount = 0;
+let rrLastThread = null;
+
+// Actual execution samples, not fabricated chart data.
+const executionHistory = [];
+const MAX_HISTORY = 120;
+
+function recordExecution(tid) {
+    const last = executionHistory.at(-1);
+
+    if (last && last.tid === tid) {
+        last.duration++;
+    } else {
+        executionHistory.push({
+            tid: tid || "IDLE",
+            duration: 1
+        });
+
+        if (executionHistory.length > MAX_HISTORY) {
+            executionHistory.shift();
+        }
+    }
+}
+
+export function getSchedulingHistory() {
+    return executionHistory.map(item => ({ ...item }));
+}
+
+function isRunnableThread(tid) {
+    const thread = tid ? getThread(tid) : null;
+
+    return thread &&
+        thread.state === THREAD_STATES.RUNNING;
+}
+
+
 /*****************************************************************
  * LONG TERM SCHEDULER
  *
@@ -52,20 +90,51 @@ let quantumTimer = 0;
  * ALGORITHM CHANGE (user-controlled)
  *****************************************************************/
 
+
 export function setSchedulerAlgorithm(algorithm) {
+    const supported = [
+        SCHEDULER_TYPES.FCFS,
+        SCHEDULER_TYPES.PRIORITY,
+        SCHEDULER_TYPES.ROUND_ROBIN
+    ];
+
+    if (!supported.includes(algorithm)) {
+        generateEvent(
+            "SCHEDULER",
+            "Scheduler",
+            `Unsupported scheduling algorithm: ${algorithm}`,
+            "Only FCFS, Priority and Round Robin are implemented.",
+            "CPU Scheduling"
+        );
+        return;
+    }
+
+    if (state.scheduler.algorithm === algorithm) return;
+
+    const previous = getThread(state.scheduler.currentThread);
+
+    if (previous &&
+        previous.state === THREAD_STATES.RUNNING) {
+        previous.state = THREAD_STATES.READY;
+    }
 
     state.scheduler.algorithm = algorithm;
-
     state.scheduler.currentThread = null;
+
+    quantumTimer = 0;
+    rrLastThread = null;
+
+    rebuildQueues();
 
     generateEvent(
         "SCHEDULER",
         "Scheduler",
         `Algorithm changed to ${algorithm}`,
-        "Short-term scheduler will now select threads using the new policy.",
+        "Running thread returned to READY for reselection.",
         "CPU Scheduling"
     );
 }
+
 export function longTermScheduler() {
 
     const activeProcesses =
@@ -240,17 +309,21 @@ function selectPriority() {
  *****************************************************************/
 
 function selectRoundRobin() {
+    const queue = state.scheduler.readyQueue;
 
-    if (
-        state.scheduler.readyQueue.length === 0
-    ) {
-        return null;
+    if (!queue.length) return null;
+
+    if (!rrLastThread) return queue[0];
+
+    const previousIndex = queue.indexOf(rrLastThread);
+
+    if (previousIndex === -1) {
+        return queue[0];
     }
 
-    return (
-        state.scheduler.readyQueue[0]
-    );
+    return queue[(previousIndex + 1) % queue.length];
 }
+
 
 /*****************************************************************
  * CHOOSE THREAD
@@ -393,47 +466,47 @@ export function priorityPreemption() {
  * ROUND ROBIN
  *****************************************************************/
 
+
 function roundRobinTick() {
+    const runningTid = state.scheduler.currentThread;
+    if (!runningTid) return;
 
     quantumTimer++;
 
-    if (
-        quantumTimer <
-        state.scheduler.timeQuantum / 10
-    ) {
-        return;
-    }
+    const quantum = Math.max(
+        1,
+        Math.ceil(Number(state.scheduler.timeQuantum || 10) / 10)
+    );
+
+    if (quantumTimer < quantum) return;
 
     quantumTimer = 0;
 
-    const running =
-        state.scheduler.currentThread;
+    const runningThread = getThread(runningTid);
 
-    if (!running)
+    if (!runningThread ||
+        runningThread.state !== THREAD_STATES.RUNNING) {
+        state.scheduler.currentThread = null;
         return;
+    }
 
-    const thread =
-        getThread(running);
-
-    if (!thread)
-        return;
-
-    thread.state =
-        THREAD_STATES.READY;
+    runningThread.state = THREAD_STATES.READY;
+    rrLastThread = runningTid;
 
     rebuildQueues();
 
-    if (
-        state.scheduler.readyQueue.length > 0
-    ) {
+    const nextTid = selectRoundRobin();
 
-        const next =
-            state.scheduler.readyQueue[0];
-
-        contextSwitch(next);
-
+    // A single runnable thread can keep the CPU.
+    if (!nextTid || nextTid === runningTid) {
+        runningThread.state = THREAD_STATES.RUNNING;
+        state.scheduler.currentThread = runningTid;
+        return;
     }
+
+    contextSwitch(nextTid);
 }
+
 
 /*****************************************************************
  * RUNNING THREAD UPDATE
@@ -547,22 +620,22 @@ function randomBlockingBehaviour() {
  * CPU UTILIZATION
  *****************************************************************/
 
-function updateCPUUtilization() {
 
-    const runningThreads =
-        state.threads.filter(
-            t =>
-                t.state ===
-                THREAD_STATES.RUNNING
-        ).length;
+function updateCPUUtilization() {
+    schedulingTickCount++;
+
+    const current = state.scheduler.currentThread;
+
+    if (isRunnableThread(current)) {
+        busyTickCount++;
+    }
 
     state.scheduler.cpuUtilization =
-        Math.min(
-            100,
-            runningThreads * 25
+        Math.round(
+            (busyTickCount / schedulingTickCount) * 100
         );
-
 }
+
 
 /*****************************************************************
  * EXPLAIN CURRENT SCHEDULER
@@ -600,46 +673,55 @@ export function explainCurrentScheduling() {
  * MAIN SCHEDULER TICK
  *****************************************************************/
 
+
 export function schedulerTick() {
-
     longTermScheduler();
-
     mediumTermScheduler();
+
+    // Clear a stale CPU assignment when its thread
+    // has blocked, terminated, or stopped running.
+    if (!isRunnableThread(state.scheduler.currentThread)) {
+        state.scheduler.currentThread = null;
+        quantumTimer = 0;
+    }
 
     rebuildQueues();
 
-    if (
-        !state.scheduler.currentThread
-    ) {
+    if (!state.scheduler.currentThread) {
+        const next = chooseNextThread();
 
-        const first =
-            chooseNextThread();
-
-        if (first) {
-
-            contextSwitch(first);
+        if (next) {
+            contextSwitch(next);
         }
-
     }
 
     priorityPreemption();
 
+    // Record the thread that actually received this tick.
+    const runningTid = isRunnableThread(
+        state.scheduler.currentThread
+    ) ? state.scheduler.currentThread : null;
+
+    recordExecution(runningTid);
+
     updateRunningThread();
 
     randomWaitingBehaviour();
-
     randomBlockingBehaviour();
 
     if (
         state.scheduler.algorithm ===
         SCHEDULER_TYPES.ROUND_ROBIN
     ) {
-
         roundRobinTick();
     }
 
+    // Keep displayed queues synchronized with new states.
+    rebuildQueues();
+
     updateCPUUtilization();
 }
+
 
 /*****************************************************************
  * QUEUE INFO FOR UI
