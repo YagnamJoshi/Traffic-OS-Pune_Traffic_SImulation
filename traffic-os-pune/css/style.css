@@ -4804,3 +4804,489 @@ pre {
         padding: 10px;
     }
 }
+
+
+/* ==========================================================
+   TrafficOS — Final UI Polish
+   Process Management / CPU Scheduler / Memory Manager
+   ========================================================== */
+
+#page-processes,
+#page-scheduler,
+#page-memory {
+    --os-border: #30445f;
+    --os-surface: #142238;
+    --os-surface-hover: #1b304b;
+    --os-muted: #9eb3cc;
+    --os-accent: #6ee7b7;
+    color: #eaf2ff;
+}
+
+/* ---------- PAGE HEADINGS ---------- */
+
+#page-processes > h2,
+#page-scheduler > h2,
+#page-memory > h2 {
+    position: relative;
+    margin: 0 0 22px;
+    padding: 0 0 16px;
+    color: #f4f8ff;
+    font-size: clamp(23px, 2.5vw, 30px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.3;
+}
+
+#page-processes > h2::after,
+#page-scheduler > h2::after,
+#page-memory > h2::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 58px;
+    height: 3px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #34d399, #60a5fa);
+}
+
+/* ---------- ORIGINAL PANELS ---------- */
+
+#page-processes > .panel,
+#page-scheduler > .panel,
+#page-memory > .panel {
+    margin-bottom: 18px;
+    padding: 24px;
+    border: 1px solid var(--os-border);
+    border-radius: 16px;
+    background: linear-gradient(
+        145deg,
+        #15253d 0%,
+        #101e32 100%
+    );
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+}
+
+#page-processes > .panel h3,
+#page-scheduler > .panel h3,
+#page-memory > .panel h3 {
+    margin: 0 0 19px;
+    color: #f0f7ff;
+    font-size: 16px;
+    font-weight: 750;
+    letter-spacing: -.015em;
+}
+
+/* ---------- FORM ROWS ---------- */
+
+#page-processes .control-row,
+#page-scheduler .control-row,
+#page-memory .control-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* ---------- INPUTS AND DROPDOWNS ---------- */
+
+#page-processes input,
+#page-processes select,
+#page-scheduler input,
+#page-scheduler select,
+#page-memory input,
+#page-memory select {
+    min-width: 0;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid #3b5472;
+    border-radius: 10px;
+    outline: none;
+    background: #0c1b2e;
+    color: #eaf2ff;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+}
+
+#page-processes input::placeholder,
+#page-scheduler input::placeholder,
+#page-memory input::placeholder {
+    color: #849ab5;
+}
+
+#page-processes input:focus,
+#page-processes select:focus,
+#page-scheduler input:focus,
+#page-scheduler select:focus,
+#page-memory input:focus,
+#page-memory select:focus {
+    border-color: #34d399;
+    background: #11243a;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, .12);
+}
+
+#page-processes select,
+#page-scheduler select,
+#page-memory select {
+    cursor: pointer;
+}
+
+#page-processes option,
+#page-scheduler option,
+#page-memory option {
+    background: #101e32;
+    color: #eaf2ff;
+}
+
+/* ---------- BUTTONS ---------- */
+
+#page-processes .control-row button,
+#page-scheduler .control-row button,
+#page-memory .control-row button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 11px 18px;
+    border: 1px solid #299b78;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #16785d, #11674f);
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.3;
+    cursor: pointer;
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+#page-processes .control-row button:hover,
+#page-scheduler .control-row button:hover,
+#page-memory .control-row button:hover {
+    transform: translateY(-2px);
+    border-color: #6ee7b7;
+    box-shadow: 0 6px 18px rgba(20, 184, 134, .15);
+}
+
+#page-processes button:disabled,
+#page-scheduler button:disabled,
+#page-memory button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* ==========================================================
+   PROCESS MANAGEMENT
+   ========================================================== */
+
+/* Create process form */
+
+#page-processes #newProcessName {
+    flex: 2 1 220px;
+}
+
+#page-processes #newProcessPriority,
+#page-processes #newProcessMemory {
+    flex: 1 1 135px;
+}
+
+#page-processes #btnCreateProcess {
+    flex: 0 0 auto;
+    min-width: 135px;
+}
+
+/* Process table */
+
+#page-processes table {
+    width: 100%;
+    border: 1px solid #30445f;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 13px;
+    background: #101d30;
+    overflow: hidden;
+}
+
+#page-processes thead {
+    background: #1a304a;
+}
+
+#page-processes th {
+    padding: 15px 14px;
+    border-bottom: 1px solid #39516e;
+    background: #1a304a;
+    color: #91acc7;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#page-processes td {
+    padding: 14px;
+    border-bottom: 1px solid #263c56;
+    color: #dce8f7;
+    font-size: 12px;
+    line-height: 1.6;
+    vertical-align: middle;
+}
+
+#page-processes tbody tr {
+    transition: background .15s ease;
+}
+
+#page-processes tbody tr:hover {
+    background: #1a3049;
+}
+
+#page-processes tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+#page-processes td:first-child {
+    color: #a7f3d0;
+    font-weight: 800;
+}
+
+#page-processes td button {
+    margin: 2px;
+    padding: 7px 10px;
+    border: 1px solid #405b77;
+    border-radius: 8px;
+    background: #203852;
+    color: #e9f3ff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#page-processes td button:hover {
+    border-color: #6ee7b7;
+    background: #27516a;
+}
+
+#page-processes td button[data-action="kill-process"] {
+    border-color: #89485b;
+    background: #522b3a;
+    color: #fda4af;
+}
+
+/* ==========================================================
+   CPU SCHEDULER
+   ========================================================== */
+
+/* Scheduler algorithm selector */
+
+#page-scheduler #schedulerAlgorithmSelect {
+    width: min(100%, 360px);
+    font-weight: 700;
+}
+
+/* Scheduler info cards */
+
+#page-scheduler #schedulerInfo,
+#page-scheduler #schedulerStats {
+    border-radius: 14px;
+}
+
+/* Concepts Demonstrated */
+
+#page-scheduler ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#page-scheduler li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 13px 15px;
+    border: 1px solid #304c61;
+    border-radius: 10px;
+    background: #192c43;
+    color: #dceaf7;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+#page-scheduler li::before {
+    content: "✓";
+    display: grid;
+    place-items: center;
+    flex: 0 0 23px;
+    height: 23px;
+    border-radius: 7px;
+    background: rgba(52, 211, 153, .12);
+    color: #6ee7b7;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+/* ==========================================================
+   MEMORY MANAGER
+   ========================================================== */
+
+/* Allocation strategy */
+
+#page-memory .control-row select {
+    flex: 1 1 240px;
+}
+
+#page-memory .control-row button {
+    flex: 0 0 auto;
+}
+
+/* Memory allocation grid */
+
+#page-memory .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 9px;
+    margin: 18px 0;
+}
+
+#page-memory .memory-block {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 65px;
+    padding: 8px 4px;
+    border: 1px solid #35516c;
+    border-radius: 10px;
+    background: #1a2c43;
+    color: #c2d5e8;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-align: center;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    transition:
+        transform .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
+}
+
+#page-memory .memory-block:hover {
+    transform: translateY(-3px);
+    border-color: #6ee7b7;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+
+/* Only explicit free classes are styled as free. */
+
+#page-memory .memory-block.free,
+#page-memory .memory-block[data-status="free"] {
+    border: 1px dashed #3c6672;
+    background: rgba(20, 63, 69, .4);
+    color: #6ee7b7;
+}
+
+/* Helper text */
+
+#page-memory .hint,
+#page-memory .panel p {
+    color: #9fb6ce;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+/* ==========================================================
+   RESPONSIVENESS
+   ========================================================== */
+
+@media (max-width: 1000px) {
+    #page-memory .memory-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 750px) {
+    #page-processes > .panel,
+    #page-scheduler > .panel,
+    #page-memory > .panel {
+        padding: 17px;
+    }
+
+    #page-scheduler ul {
+        grid-template-columns: 1fr;
+    }
+
+    #page-memory .memory-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #page-processes #btnCreateProcess {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    #page-memory .memory-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #page-processes .control-row,
+    #page-scheduler .control-row,
+    #page-memory .control-row {
+        align-items: stretch;
+    }
+
+    #page-processes .control-row > *,
+    #page-scheduler .control-row > *,
+    #page-memory .control-row > * {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #page-processes *,
+    #page-scheduler *,
+    #page-memory * {
+        transition: none !important;
+    }
+}
+
+/* Hide legacy panels only when their new hub exists */
+
+/* Process: keep Create Process and the original process table
+   unless the new Process Hub explicitly replaces them. */
+
+/* Scheduler: hide the old concepts panel if the new
+   Scheduler Lab already includes its explanation. */
+#page-scheduler:has(#schedulerLab) > .panel:has(ul) {
+    display: none;
+}
+
+/* Memory: leave allocation/free controls available.
+   They remain useful alongside the new memory dashboard. */
+
+   #page-processes .os-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 13px;
+}
+
+#page-processes .os-table-scroll table {
+    min-width: 690px;
+}
