@@ -4531,3 +4531,276 @@ pre {
         grid-template-columns: 70px minmax(0, 1fr) 30px;
     }
 }
+
+/* ================================================
+   TrafficOS — Modern Simulation Dashboard
+   ================================================ */
+
+#page-simulation .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#page-simulation #activityPanel,
+#page-simulation #schedulerInfo {
+    margin: 0;
+    padding: 22px;
+    border: 1px solid #304b61;
+    border-radius: 18px;
+    background: linear-gradient(
+        145deg,
+        #15283d 0%,
+        #101d30 100%
+    );
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .15);
+}
+
+.sim-card-heading,
+.sim-scheduler-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sim-card-heading > div:nth-child(2),
+.sim-scheduler-heading > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.sim-card-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: #7fa3bd;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+#page-simulation .side-panel h3 {
+    margin: 0;
+    color: #f1f7ff;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.sim-card-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 43px;
+    height: 43px;
+    border-radius: 13px;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.sim-icon-healthy {
+    color: #6ee7b7;
+    background: rgba(52, 211, 153, .13);
+}
+
+.sim-icon-warning {
+    color: #fcd34d;
+    background: rgba(251, 191, 36, .13);
+}
+
+.sim-icon-critical {
+    color: #fda4af;
+    background: rgba(251, 113, 133, .13);
+}
+
+.sim-status-dot,
+.sim-running-indicator {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 12px rgba(52, 211, 153, .4);
+}
+
+.sim-status-dot.warning {
+    background: #fbbf24;
+    box-shadow: 0 0 12px rgba(251, 191, 36, .4);
+}
+
+.sim-status-dot.critical {
+    background: #fb7185;
+    box-shadow: 0 0 12px rgba(251, 113, 133, .4);
+}
+
+#page-simulation .sim-activity-message {
+    margin: 22px 0;
+    color: #c3d4e5;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.sim-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding-top: 16px;
+    border-top: 1px solid #2c4159;
+}
+
+.sim-card-footer span {
+    color: #8ca5be;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .07em;
+}
+
+.sim-card-footer strong {
+    color: #a7f3d0;
+    font-size: 11px;
+    text-align: right;
+}
+
+.sim-algorithm-badge {
+    max-width: 55%;
+    padding: 7px 10px;
+    border: 1px solid #2c7869;
+    border-radius: 20px;
+    background: rgba(52, 211, 153, .1);
+    color: #a7f3d0;
+    font-size: 10px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+    text-align: center;
+}
+
+.sim-cpu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 23px 0 10px;
+}
+
+.sim-cpu-header span {
+    color: #a9bfd5;
+    font-size: 12px;
+}
+
+.sim-cpu-header strong {
+    color: #f0f7ff;
+    font-size: 22px;
+}
+
+.sim-cpu-track {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #2a3e54;
+}
+
+.sim-cpu-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #34d399, #60a5fa);
+    transition: width .35s ease;
+}
+
+.sim-running {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #304a63;
+    border-radius: 12px;
+    background: #192d43;
+}
+
+.sim-running > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.sim-running small {
+    color: #8fa9c3;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+.sim-running strong {
+    color: #eaf5ff;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.sim-scheduler-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-bottom: 19px;
+}
+
+.sim-scheduler-metrics > div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px;
+    border: 1px solid #304762;
+    border-radius: 10px;
+    background: #192b42;
+}
+
+.sim-scheduler-metrics span {
+    color: #9ab0c7;
+    font-size: 10px;
+}
+
+.sim-scheduler-metrics strong {
+    color: #f1f7ff;
+    font-size: 21px;
+}
+
+/* Modern simulation-only control toolbar */
+
+#page-simulation > .controls,
+#page-simulation > .speed-controls {
+    padding: 12px;
+    border: 1px solid #30455e;
+    border-radius: 13px;
+    background: #14243a;
+}
+
+#page-simulation > .controls {
+    gap: 9px;
+}
+
+#page-simulation > .controls button {
+    min-height: 39px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#page-simulation > .speed-controls {
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 17px;
+}
+
+@media (max-width: 600px) {
+    #page-simulation #activityPanel,
+    #page-simulation #schedulerInfo {
+        padding: 17px;
+    }
+
+    .sim-scheduler-metrics {
+        gap: 6px;
+    }
+
+    .sim-scheduler-metrics > div {
+        padding: 10px;
+    }
+}

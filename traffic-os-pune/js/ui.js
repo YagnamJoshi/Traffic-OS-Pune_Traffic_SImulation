@@ -124,13 +124,119 @@ function renderTopbar() {
  ********************************************************************/
 
 function renderActivityPanel() {
-
     if (!ui.activityPanel) return;
 
+    const activity = state.activityPanel;
+
+    const title = activity.title || "SYSTEM STATUS";
+    const message = activity.message || "Awaiting activity.";
+    const concept = activity.concept || "Operating Systems";
+
+    const escapeHTML = value => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+
+    const isDanger = /DEADLOCK|FAILURE|FAULT/i.test(title);
+    const isWarning = /EMERGENCY|CONGESTION/i.test(title);
+
+    const status = isDanger
+        ? "critical"
+        : isWarning
+            ? "warning"
+            : "healthy";
+
     ui.activityPanel.innerHTML = `
-        <h3>${state.activityPanel.title}</h3>
-        <p>${state.activityPanel.message}</p>
-        <small>${state.activityPanel.concept}</small>
+        <div class="sim-card-heading">
+            <div class="sim-card-icon sim-icon-${status}">
+                ${isDanger ? "!" : isWarning ? "⚡" : "✓"}
+            </div>
+            <div>
+                <span class="sim-card-eyebrow">SYSTEM HEALTH</span>
+                <h3>${escapeHTML(title)}</h3>
+            </div>
+            <span class="sim-status-dot ${status}"></span>
+        </div>
+
+        <p class="sim-activity-message">
+            ${escapeHTML(message)}
+        </p>
+
+        <div class="sim-card-footer">
+            <span>OS CONCEPT</span>
+            <strong>${escapeHTML(concept)}</strong>
+        </div>
+    `;
+}
+
+function renderScheduler() {
+    const box = document.getElementById("schedulerInfo");
+    if (!box) return;
+
+    const info = getSchedulerInfo();
+
+    const cpu = Math.max(
+        0,
+        Math.min(100, Number(info.cpu) || 0)
+    );
+
+    const escapeHTML = value => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+
+    box.innerHTML = `
+        <div class="sim-scheduler-heading">
+            <div>
+                <span class="sim-card-eyebrow">CPU MANAGEMENT</span>
+                <h3>Scheduler Overview</h3>
+            </div>
+            <span class="sim-algorithm-badge">
+                ${escapeHTML(info.algorithm)}
+            </span>
+        </div>
+
+        <div class="sim-cpu-header">
+            <span>CPU Utilization</span>
+            <strong>${cpu.toFixed(0)}%</strong>
+        </div>
+
+        <div class="sim-cpu-track">
+            <div class="sim-cpu-fill"
+                 style="width:${cpu}%"></div>
+        </div>
+
+        <div class="sim-running">
+            <span class="sim-running-indicator"></span>
+            <div>
+                <small>CURRENTLY RUNNING</small>
+                <strong>${escapeHTML(info.running || "CPU IDLE")}</strong>
+            </div>
+        </div>
+
+        <div class="sim-scheduler-metrics">
+            <div>
+                <span>Ready</span>
+                <strong>${info.ready.length}</strong>
+            </div>
+            <div>
+                <span>Waiting</span>
+                <strong>${info.waiting.length}</strong>
+            </div>
+            <div>
+                <span>Blocked</span>
+                <strong>${info.blocked.length}</strong>
+            </div>
+        </div>
+
+        <div class="sim-card-footer">
+            <span>CONTEXT SWITCHES</span>
+            <strong>${info.switches}</strong>
+        </div>
     `;
 }
 
@@ -256,28 +362,8 @@ function renderEvents() {
         .join("");
 }
 
-/********************************************************************
- * SCHEDULER
- ********************************************************************/
 
-function renderScheduler() {
 
-    const schedulerBox = document.getElementById("schedulerInfo");
-
-    if (!schedulerBox) return;
-
-    const info = getSchedulerInfo();
-
-    schedulerBox.innerHTML = `
-        <div>Algorithm: ${info.algorithm}</div>
-        <div>CPU: ${info.cpu}%</div>
-        <div>Running: ${info.running || "IDLE"}</div>
-        <div>Ready: ${info.ready.length}</div>
-        <div>Waiting: ${info.waiting.length}</div>
-        <div>Blocked: ${info.blocked.length}</div>
-        <div>Context Switches: ${info.switches}</div>
-    `;
-}
 
 /********************************************************************
  * DEADLOCK
