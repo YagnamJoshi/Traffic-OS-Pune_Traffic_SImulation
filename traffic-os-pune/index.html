@@ -474,85 +474,46 @@
 <!-- OS CONCEPTS PAGE -->
 <!-- ===================================================== -->
 
-<section
-    id="page-concepts"
-    class="page">
 
-    <h2>
-        Operating System Concepts Demonstrated
-    </h2>
+<!-- ============================================== -->
+<!-- OS CONCEPTS LEARNING HUB -->
+<!-- ============================================== -->
 
-    <div class="concept-grid">
-
-        <div class="panel">
-            <h3>CPU Scheduling</h3>
-            <ul>
-                <li>Long-Term Scheduler</li>
-                <li>Medium-Term Scheduler</li>
-                <li>Short-Term Scheduler</li>
-                <li>FCFS</li>
-                <li>Round Robin</li>
-                <li>Priority Scheduling</li>
-                <li>Context Switching</li>
-            </ul>
-        </div>
-
-        <div class="panel">
-            <h3>Process Management</h3>
-            <ul>
-                <li>Process Control Block</li>
-                <li>Process States</li>
-                <li>Thread Management</li>
-                <li>Process Recovery</li>
-                <li>Fault Handling</li>
-            </ul>
-        </div>
-
-        <div class="panel">
-            <h3>Memory Management</h3>
-            <ul>
-                <li>First Fit</li>
-                <li>Best Fit</li>
-                <li>Worst Fit</li>
-                <li>Fragmentation</li>
-                <li>Memory Allocation</li>
-            </ul>
-        </div>
-
-        <div class="panel">
-            <h3>IPC</h3>
-            <ul>
-                <li>Message Passing</li>
-                <li>Queue Management</li>
-                <li>Producer Consumer</li>
-                <li>Process Communication</li>
-            </ul>
-        </div>
-
-        <div class="panel">
-            <h3>Deadlocks</h3>
-            <ul>
-                <li>Detection</li>
-                <li>Prevention</li>
-                <li>Avoidance</li>
-                <li>Resource Contention</li>
-            </ul>
-        </div>
-
-        <div class="panel">
-            <h3>Smart City Simulation</h3>
-            <ul>
-                <li>Emergency Routing</li>
-                <li>Green Corridor</li>
-                <li>Traffic Congestion</li>
-                <li>Signal Control</li>
-                <li>Resource Coordination</li>
-            </ul>
-        </div>
-
+<section id="page-concepts" class="page">
+  <div class="learn-hero">
+    <div>
+      <span class="learn-eyebrow">TRAFFICOS ACADEMY</span>
+      <h2>Operating Systems Learning Hub</h2>
+      <p>
+        Learn OS concepts through structured documentation,
+        diagrams, C examples, and TrafficOS demonstrations.
+      </p>
     </div>
+    <div class="learn-hero-icon" aria-hidden="true">OS</div>
+  </div>
 
+  <div class="learn-toolbar">
+    <input
+      id="learnSearch"
+      type="search"
+      placeholder="Search topics and lessons..."
+      aria-label="Search OS concepts"
+    />
+
+    <button id="learnHome" type="button">
+      All Topics
+    </button>
+  </div>
+
+  <div id="learnStats" class="learn-stats"></div>
+
+  <div id="learnBreadcrumb" class="learn-breadcrumb"></div>
+
+  <div id="learnCards" class="learn-card-grid"></div>
+
+  <div id="learnReader" class="learn-reader" hidden></div>
 </section>
+
 
 <!-- ===================================================== -->
 <!-- DEVELOPER PAGE -->
@@ -616,4 +577,5 @@ if ("serviceWorker" in navigator) {
 
 </script>
 </body>
+<script type="module" src="./js/osConcepts.js"></script>
 </html>

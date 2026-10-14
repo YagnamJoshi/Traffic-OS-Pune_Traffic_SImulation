@@ -1,4 +1,4 @@
-const CACHE_NAME = "trafficos-v3";
+const CACHE_NAME = "trafficos-v6";
 
 const FILES_TO_CACHE = [
 
@@ -15,7 +15,8 @@ const FILES_TO_CACHE = [
     "./js/ipcManager.js",
     "./js/traffic.js",
     "./js/simulation.js",
-    "./js/ui.js"
+    "./js/ui.js",
+    "./js/osConcepts.js"
 ];
 
 self.addEventListener(

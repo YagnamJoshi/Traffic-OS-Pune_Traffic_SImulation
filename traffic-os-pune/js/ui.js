@@ -5,7 +5,7 @@
  * UI Rendering Engine
  ********************************************************************/
 
-import { state } from "./state.js";
+import { state, generateEvent } from "./state.js";
 import { getSchedulerInfo } from "./scheduler.js";
 import { getDeadlockInfo } from "./deadlock.js";
 
@@ -24,7 +24,7 @@ export function initializeUI() {
 
     cacheElements();
     resizeCanvas();
-
+    initializeMapInteractions();
     window.addEventListener("resize", resizeCanvas);
     document.addEventListener("fullscreenchange", () => setTimeout(resizeCanvas, 50));
 
@@ -355,13 +355,33 @@ function renderTrafficMap() {
     const worldWidth = Math.max(1, maxX - minX);
     const worldHeight = Math.max(1, maxY - minY);
 
+    
     const scale = Math.min(
         width / worldWidth,
         height / worldHeight
     ) * MAP.zoom;
 
+    // Center the map inside the canvas
     const offsetX = (width - worldWidth * scale) / 2;
     const offsetY = (height - worldHeight * scale) / 2;
+
+    // Store the same transform for mouse-click detection
+    mapInteraction.transform = {
+        scale,
+        offsetX,
+        offsetY,
+        minX,
+        minY
+    };
+
+
+    mapInteraction.transform = {
+    scale,
+    offsetX,
+    offsetY,
+    minX,
+    minY
+    };
 
     ctx.save();
     ctx.translate(offsetX, offsetY);
@@ -623,77 +643,149 @@ function getVehicleColor(type) {
     }
 }
 
+
 function renderVehicles(ctx) {
     const junctionMap = new Map(
-        (state.traffic.junctions || [])
-            .map(j => [j.id, j])
+        (state.traffic.junctions || []).map(j => [j.id, j])
     );
 
-    (state.traffic.vehicles || []).forEach(vehicle => {
+    for (const vehicle of state.traffic.vehicles || []) {
         if (!Number.isFinite(vehicle.x) ||
-            !Number.isFinite(vehicle.y)) return;
+            !Number.isFinite(vehicle.y)) continue;
+
+        // The route is an array of junction IDs.
+        // currentNode is the current route index.
+        const nextId = vehicle.route?.[vehicle.currentNode + 1];
+        const previousId = vehicle.route?.[vehicle.currentNode];
+
+        const next = junctionMap.get(nextId);
+        const previous = junctionMap.get(previousId);
 
         let angle = 0;
 
-        // Use the next route node to orient the vehicle.
-        const nextId = vehicle.route?.[0];
-        const nextNode = junctionMap.get(nextId);
-
-        if (nextNode) {
+        if (next) {
             angle = Math.atan2(
-                nextNode.y - vehicle.y,
-                nextNode.x - vehicle.x
+                next.y - vehicle.y,
+                next.x - vehicle.x
+            );
+        } else if (previous) {
+            angle = Math.atan2(
+                vehicle.y - previous.y,
+                vehicle.x - previous.x
             );
         }
+
+        // Display-only offset to visually separate road directions.
+        // Real lane-aware movement will be implemented later.
+        const laneOffset = 9;
+        const drawX = vehicle.x - Math.sin(angle) * laneOffset;
+        const drawY = vehicle.y + Math.cos(angle) * laneOffset;
 
         const isBus = vehicle.type === "BUS";
         const isBike = vehicle.type === "BIKE" ||
                        vehicle.type === "SCOOTER";
+        const isAuto = vehicle.type === "AUTO";
+        const isAmbulance = vehicle.type === "AMBULANCE";
 
-        const length = isBus ? 24 : isBike ? 10 : 16;
-        const breadth = isBus ? 11 : isBike ? 6 : 9;
+        const length = isBus ? 29 : isBike ? 12 : isAuto ? 15 : 19;
+        const breadth = isBus ? 12 : isBike ? 6 : 10;
+
+        const selected =
+            mapInteraction.selected?.type === "vehicle" &&
+            mapInteraction.selected.id === vehicle.id;
 
         ctx.save();
-        ctx.translate(vehicle.x, vehicle.y);
+        ctx.translate(drawX, drawY);
         ctx.rotate(angle);
 
-        ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
-        ctx.shadowBlur = 5;
-        ctx.shadowOffsetY = 3;
+        // Selection halo.
+        if (selected) {
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, length / 2 + 7,
+                        breadth / 2 + 7, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
 
-        ctx.fillStyle = getVehicleColor(vehicle.type);
+        // Shadow.
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
         ctx.beginPath();
         ctx.roundRect(
-            -length / 2,
-            -breadth / 2,
-            length,
-            breadth,
-            3
+            -length / 2 + 2, -breadth / 2 + 3,
+            length, breadth, 3
         );
         ctx.fill();
 
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
+        // Body.
+        ctx.fillStyle = getVehicleColor(vehicle.type);
+        ctx.beginPath();
+        ctx.roundRect(
+            -length / 2, -breadth / 2,
+            length, breadth, isBike ? 2 : 4
+        );
+        ctx.fill();
 
-        // Windshield.
         if (!isBike) {
-            ctx.fillStyle = "#b7e4fa";
+            // Windshield and rear glass.
+            ctx.fillStyle = "#b9e6fa";
             ctx.fillRect(
-                length / 2 - 6,
-                -breadth / 2 + 2,
-                3,
-                breadth - 4
+                length / 2 - 7, -breadth / 2 + 2,
+                3, breadth - 4
             );
+
+            if (!isBus) {
+                ctx.fillStyle = "#29485c";
+                ctx.fillRect(
+                    -length / 2 + 3, -breadth / 2 + 2,
+                    3, breadth - 4
+                );
+            }
+        } else {
+            // Rider / handlebar.
+            ctx.fillStyle = "#172536";
+            ctx.beginPath();
+            ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(3, -4, 2, 8);
         }
 
-        if (vehicle.type === "AMBULANCE") {
+        if (isBus) {
+            // Passenger windows.
+            ctx.fillStyle = "#193d50";
+            for (let x = -9; x <= 7; x += 6) {
+                ctx.fillRect(x, -breadth / 2 + 1, 4, 2);
+                ctx.fillRect(x, breadth / 2 - 3, 4, 2);
+            }
+        }
+
+        if (isAuto) {
+            ctx.fillStyle = "#173b25";
+            ctx.fillRect(-length / 2 + 2, -3, 5, 6);
+        }
+
+        if (isAmbulance) {
             ctx.fillStyle = "#ffffff";
-            ctx.fillRect(-3, -1, 6, 2);
-            ctx.fillRect(-1, -3, 2, 6);
+            ctx.fillRect(-4, -1, 8, 2);
+            ctx.fillRect(-1, -4, 2, 8);
+        }
+
+        // Headlights.
+        ctx.fillStyle = "#fff4c2";
+        ctx.fillRect(length / 2 - 2, -breadth / 2 + 1, 2, 2);
+        ctx.fillRect(length / 2 - 2, breadth / 2 - 3, 2, 2);
+
+        if (vehicle.manualStopped) {
+            ctx.fillStyle = "#fb7185";
+            ctx.beginPath();
+            ctx.arc(0, -breadth / 2 - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         ctx.restore();
-    });
+    }
 }
 
 function renderMetro(ctx) {
@@ -754,4 +846,378 @@ function drawMapOverlay(ctx, width, height) {
     ctx.fillText("Red", 104, legendY);
 
     ctx.restore();
+}
+
+/***********************************************************
+ * PHASE 2 — MAP INTERACTIONS
+ ***********************************************************/
+
+const mapInteraction = {
+    selected: null,
+    transform: null
+};
+
+function initializeMapInteractions() {
+    if (!ui.canvas) return;
+
+    ui.canvas.style.cursor = "crosshair";
+
+    ui.canvas.addEventListener("click", handleMapClick);
+
+    const panel = document.querySelector(".canvas-panel");
+    if (!panel || document.getElementById("mapInspector")) return;
+
+    const inspector = document.createElement("div");
+    inspector.id = "mapInspector";
+    inspector.className = "map-inspector";
+    inspector.hidden = true;
+
+    panel.appendChild(inspector);
+
+    inspector.addEventListener("click", event => {
+        const button = event.target.closest("[data-map-action]");
+        if (!button) return;
+
+        handleMapAction(button.dataset.mapAction);
+    });
+}
+
+function handleMapClick(event) {
+    const canvas = ui.canvas;
+    const transform = mapInteraction.transform;
+
+    if (!canvas || !transform) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    const screenX =
+        (event.clientX - rect.left) * canvas.width / rect.width;
+
+    const screenY =
+        (event.clientY - rect.top) * canvas.height / rect.height;
+
+    const worldX =
+        (screenX - transform.offsetX) / transform.scale +
+        transform.minX;
+
+    const worldY =
+        (screenY - transform.offsetY) / transform.scale +
+        transform.minY;
+
+    const vehicles = state.traffic.vehicles || [];
+
+    
+const junctionMap = new Map(
+    (state.traffic.junctions || []).map(j => [j.id, j])
+);
+
+const vehicle = [...vehicles].reverse().find(v => {
+    const next = junctionMap.get(
+        v.route?.[v.currentNode + 1]
+    );
+
+    const previous = junctionMap.get(
+        v.route?.[v.currentNode]
+    );
+
+    let angle = 0;
+
+    if (next) {
+        angle = Math.atan2(next.y - v.y, next.x - v.x);
+    } else if (previous) {
+        angle = Math.atan2(
+            v.y - previous.y,
+            v.x - previous.x
+        );
+    }
+
+    const drawX = v.x - Math.sin(angle) * 9;
+    const drawY = v.y + Math.cos(angle) * 9;
+
+    // Keep clicking reasonably easy at different map scales.
+    const hitRadius = Math.max(14, 10 / transform.scale);
+
+    return Math.hypot(
+        drawX - worldX,
+        drawY - worldY
+    ) < hitRadius;
+});
+
+
+    if (vehicle) {
+        mapInteraction.selected = {
+            type: "vehicle",
+            id: vehicle.id
+        };
+
+        updateMapInspector();
+        return;
+    }
+
+    const junction = (state.traffic.junctions || []).find(j =>
+        Math.hypot(j.x - worldX, j.y - worldY) < 30
+    );
+
+    if (junction) {
+        mapInteraction.selected = {
+            type: "junction",
+            id: junction.id
+        };
+
+        updateMapInspector();
+        return;
+    }
+
+    mapInteraction.selected = null;
+    updateMapInspector();
+}
+
+function updateMapInspector() {
+    const inspector = document.getElementById("mapInspector");
+    if (!inspector) return;
+
+    const selection = mapInteraction.selected;
+
+    if (!selection) {
+        inspector.hidden = true;
+        return;
+    }
+
+    if (selection.type === "junction") {
+        const junction = state.traffic.junctions.find(
+            j => j.id === selection.id
+        );
+
+        if (!junction) {
+            inspector.hidden = true;
+            return;
+        }
+
+        inspector.hidden = false;
+        inspector.innerHTML = `
+            <h3>${junction.name}</h3>
+            <p>Junction ID: ${junction.id}</p>
+            <p>Signal: <strong>${junction.signal}</strong></p>
+            <p>Load: ${junction.load ?? 0}</p>
+
+            <button data-map-action="toggle-signal">
+                Toggle Signal
+            </button>
+
+            <button data-map-action="close">
+                Close
+            </button>
+        `;
+    }
+
+    
+if (selection.type === "vehicle") {
+    const vehicle = state.traffic.vehicles.find(
+        v => v.id === selection.id
+    );
+
+    if (!vehicle) {
+        mapInteraction.selected = null;
+        inspector.hidden = true;
+        return;
+    }
+
+    const destination = state.traffic.junctions.find(
+        j => j.id === vehicle.destination
+    );
+
+    const multiplier =
+        vehicle.manualSpeedMultiplier ?? 1;
+
+    inspector.hidden = false;
+
+    inspector.innerHTML = `
+        <h3>🚗 ${vehicle.type} — ${vehicle.id}</h3>
+
+        <p><strong>Destination:</strong>
+            ${destination?.name ?? vehicle.destination ?? "Unknown"}
+        </p>
+
+        <p><strong>Base speed:</strong> ${vehicle.speed}</p>
+
+        <p><strong>Current speed:</strong>
+            ${(vehicle.speed * multiplier).toFixed(1)}
+        </p>
+
+        <p><strong>Status:</strong>
+            ${vehicle.manualStopped ? "Stopped manually" : "Active"}
+        </p>
+
+        <p><strong>Waiting time:</strong>
+            ${vehicle.waitingTime ?? 0} ticks
+        </p>
+
+        <div class="map-inspector-actions">
+            <button data-map-action="toggle-vehicle">
+                ${vehicle.manualStopped ? "▶ Resume" : "⏸ Stop"}
+            </button>
+
+            <button data-map-action="speed-down">
+                − Speed
+            </button>
+
+            <button data-map-action="speed-up">
+                + Speed
+            </button>
+
+            <button data-map-action="inspect-event">
+                Log Inspection
+            </button>
+
+            <button data-map-action="remove-vehicle">
+                🗑 Remove
+            </button>
+
+            <button data-map-action="close">
+                Close
+            </button>
+        </div>
+    `;
+}
+
+}
+
+function handleMapAction(action) {
+    const selection = mapInteraction.selected;
+    if (!selection) return;
+
+    
+    // Vehicle controls
+    if (selection.type === "vehicle") {
+        const vehicle = state.traffic.vehicles.find(
+            v => v.id === selection.id
+        );
+
+        if (!vehicle) {
+            mapInteraction.selected = null;
+            updateMapInspector();
+            return;
+        }
+
+        if (action === "toggle-vehicle") {
+            vehicle.manualStopped = !vehicle.manualStopped;
+
+            generateEvent(
+                "TRAFFIC",
+                vehicle.id,
+                `${vehicle.id} ${vehicle.manualStopped
+                    ? "stopped manually"
+                    : "resumed movement"}`,
+                "Operator changed the vehicle's movement state.",
+                "Process Control"
+            );
+        }
+
+        if (action === "speed-up" || action === "speed-down") {
+            const oldSpeed =
+                vehicle.manualSpeedMultiplier ?? 1;
+
+            const difference =
+                action === "speed-up" ? 0.25 : -0.25;
+
+            vehicle.manualSpeedMultiplier = Math.max(
+                0.25,
+                Math.min(3, oldSpeed + difference)
+            );
+
+            generateEvent(
+                "TRAFFIC",
+                vehicle.id,
+                `${vehicle.id} speed multiplier set to ` +
+                `${vehicle.manualSpeedMultiplier.toFixed(2)}x`,
+                "Operator adjusted the vehicle speed.",
+                "Process Control"
+            );
+        }
+
+        if (action === "remove-vehicle") {
+            state.traffic.vehicles =
+                state.traffic.vehicles.filter(
+                    v => v.id !== vehicle.id
+                );
+
+            generateEvent(
+                "TRAFFIC",
+                vehicle.id,
+                `${vehicle.id} removed from traffic`,
+                "Operator removed a vehicle from the simulation.",
+                "Process Termination"
+            );
+
+            mapInteraction.selected = null;
+            updateMapInspector();
+            return;
+        }
+
+        if (
+            action === "toggle-vehicle" ||
+            action === "speed-up" ||
+            action === "speed-down"
+        ) {
+            updateMapInspector();
+            return;
+        }
+    }
+
+
+    if (action === "close") {
+        mapInteraction.selected = null;
+        updateMapInspector();
+        return;
+    }
+
+    if (selection.type === "junction" &&
+        action === "toggle-signal") {
+
+        const junction = state.traffic.junctions.find(
+            j => j.id === selection.id
+        );
+
+        if (!junction) return;
+
+        const previous = junction.signal;
+
+        junction.signal =
+            previous === "GREEN" ? "RED" : "GREEN";
+
+        junction.signalTimer = 0;
+
+        state.statistics.signalChanges =
+            (state.statistics.signalChanges || 0) + 1;
+
+        generateEvent(
+            "TRAFFIC",
+            junction.id,
+            `${junction.name}: signal changed from ${previous} to ${junction.signal}`,
+            "Manual traffic signal override from the city map.",
+            "Process Scheduling / Traffic Control"
+        );
+
+        updateMapInspector();
+    }
+
+    if (selection.type === "vehicle" &&
+        action === "inspect-event") {
+
+        const vehicle = state.traffic.vehicles.find(
+            v => v.id === selection.id
+        );
+
+        if (!vehicle) return;
+
+        generateEvent(
+            "TRAFFIC",
+            vehicle.id,
+            `Vehicle ${vehicle.id} inspected`,
+            `Vehicle type: ${vehicle.type}`,
+            "Traffic Monitoring"
+        );
+
+        updateMapInspector();
+    }
 }

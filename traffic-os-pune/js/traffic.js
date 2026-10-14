@@ -1063,7 +1063,14 @@ export function updateRoadCapacity() {
 
 function moveVehicle(vehicle) {
 
-    if (
+    
+    // Manual vehicle pause from the map inspector.
+    if (vehicle.manualStopped) {
+        vehicle.waitingTime++;
+        return;
+    }
+
+    if (   
         vehicle.completed
     ) return;
 
@@ -1132,8 +1139,12 @@ function moveVehicle(vehicle) {
         return;
     }
 
+    
+    // User-selected speed multiplier.
+    // The original vehicle speed remains unchanged.
     let speed =
-        vehicle.speed;
+        vehicle.speed * (vehicle.manualSpeedMultiplier ?? 1);
+
 
     if (
         target.signal === "RED" &&
