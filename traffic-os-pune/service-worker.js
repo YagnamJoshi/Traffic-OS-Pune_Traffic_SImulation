@@ -1,4 +1,4 @@
-const CACHE_NAME = "trafficos-v6";
+const CACHE_NAME = "trafficos-v7";
 
 const FILES_TO_CACHE = [
 
@@ -16,6 +16,7 @@ const FILES_TO_CACHE = [
     "./js/traffic.js",
     "./js/simulation.js",
     "./js/ui.js",
+    "./js/developer.js",
     "./js/osConcepts.js"
 ];
 

@@ -519,44 +519,155 @@
 <!-- DEVELOPER PAGE -->
 <!-- ===================================================== -->
 
-<section
-    id="page-developer"
-    class="page">
 
-    <h2>Developer</h2>
+<!-- ========================================= -->
+<!-- TRAFFICOS DEVELOPER HUB -->
+<!-- ========================================= -->
 
-    <div class="panel">
-        <h3>Yagnam Sanket Joshi</h3>
-        <p>Developer and System Designer</p>
-        <p>
-            TrafficOS Pune is a Smart City Operating System simulator
-            designed to demonstrate core OS concepts through a traffic
-            management game.
-        </p>
+<section id="page-developer" class="page">
+
+  <div class="dev-hero">
+    <div class="dev-hero-content">
+      <span class="dev-eyebrow">BEHIND THE SYSTEM</span>
+
+      <h2>
+        Built to Make
+        <span>Operating Systems Come Alive.</span>
+      </h2>
+
+      <p>
+        TrafficOS Pune is an interactive educational simulation
+        that connects operating-system concepts with a
+        traffic-management environment.
+      </p>
+
+      <div class="dev-hero-actions">
+        <button id="devExploreSimulation" type="button">
+          Explore Simulation →
+        </button>
+
+        <button id="devExploreConcepts" type="button">
+          Explore OS Concepts
+        </button>
+      </div>
     </div>
 
-    <div class="panel">
-        <h3>Github</h3>
-        <p>Add GitHub Profile Here</p>
+    <div class="dev-hero-visual" aria-hidden="true">
+      <div class="dev-orbit dev-orbit-one"></div>
+      <div class="dev-orbit dev-orbit-two"></div>
+      <div class="dev-core">OS</div>
+      <span class="dev-orbit-label dev-label-one">CPU</span>
+      <span class="dev-orbit-label dev-label-two">RAM</span>
+      <span class="dev-orbit-label dev-label-three">IPC</span>
+      <span class="dev-orbit-label dev-label-four">I/O</span>
+    </div>
+  </div>
+
+  <div class="dev-section-heading">
+    <div>
+      <span class="dev-eyebrow">PROJECT OVERVIEW</span>
+      <h3>Inside TrafficOS</h3>
+    </div>
+    <p>A simulation platform built with modular web technologies.</p>
+  </div>
+
+  <div class="dev-stat-grid" id="devStats"></div>
+
+  <div class="dev-section-heading">
+    <div>
+      <span class="dev-eyebrow">THE PEOPLE</span>
+      <h3>Meet the Developers</h3>
+    </div>
+    <p>The team behind the project.</p>
+  </div>
+
+  <div class="dev-team-grid" id="devTeam"></div>
+
+  <div class="dev-section-heading">
+    <div>
+      <span class="dev-eyebrow">ENGINEERING</span>
+      <h3>System Architecture</h3>
+    </div>
+    <p>How the interface and simulation modules work together.</p>
+  </div>
+
+  <div class="dev-architecture">
+    <div class="dev-architecture-layer">
+      <span class="dev-layer-tag">PRESENTATION</span>
+      <strong>TrafficOS Interface</strong>
+      <p>Dashboard · Map · Learning Hub · Controls</p>
     </div>
 
-    <div class="panel">
-        <h3>Portfolio</h3>
-        <p>Add Portfolio Link Here</p>
+    <div class="dev-architecture-arrow">↓</div>
+
+    <div class="dev-architecture-layer">
+      <span class="dev-layer-tag">APPLICATION</span>
+      <strong>Simulation Controller</strong>
+      <p>State Updates · User Actions · Event Handling</p>
     </div>
 
-    <div class="panel">
-        <h3>Future Enhancements</h3>
-        <ul>
-            <li>AI Traffic Optimization</li>
-            <li>Multiplayer City Simulation</li>
-            <li>Advanced Deadlock Visualization</li>
-            <li>Detailed PCB Explorer</li>
-            <li>Real-Time Analytics Dashboard</li>
-        </ul>
+    <div class="dev-architecture-arrow">↓</div>
+
+    <div class="dev-architecture-modules">
+      <div>⚙️ Processes</div>
+      <div>⏱️ Scheduler</div>
+      <div>🧠 Memory</div>
+      <div>📨 IPC</div>
+      <div>🔗 Deadlock</div>
+      <div>🚦 Traffic</div>
     </div>
+
+    <div class="dev-architecture-arrow">↓</div>
+
+    <div class="dev-architecture-layer">
+      <span class="dev-layer-tag">OBSERVABILITY</span>
+      <strong>State & Event Log</strong>
+      <p>Metrics · Activity · Simulation Events</p>
+    </div>
+  </div>
+
+  <div class="dev-section-heading">
+    <div>
+      <span class="dev-eyebrow">TOOLS & TECHNOLOGIES</span>
+      <h3>Technology Stack</h3>
+    </div>
+  </div>
+
+  <div class="dev-tech-grid" id="devTech"></div>
+
+  <div class="dev-section-heading">
+    <div>
+      <span class="dev-eyebrow">DEVELOPMENT JOURNEY</span>
+      <h3>Project Roadmap</h3>
+    </div>
+  </div>
+
+  <div class="dev-roadmap" id="devRoadmap"></div>
+
+  <div class="dev-footer-card">
+    <div>
+      <span class="dev-eyebrow">EXPLORE THE PROJECT</span>
+      <h3>TrafficOS Pune</h3>
+      <p>
+        Learn how operating-system mechanisms can be
+        represented through an interactive traffic simulation.
+      </p>
+    </div>
+
+    <div class="dev-footer-actions">
+      <a id="devGithubLink" href="#" hidden
+         target="_blank" rel="noopener noreferrer">
+        GitHub Repository ↗
+      </a>
+
+      <button id="devOpenDocs" type="button">
+        View Documentation →
+      </button>
+    </div>
+  </div>
 
 </section>
+
 
 </main>
 
@@ -578,4 +689,5 @@ if ("serviceWorker" in navigator) {
 </script>
 </body>
 <script type="module" src="./js/osConcepts.js"></script>
+<script type="module" src="./js/developer.js"></script>
 </html>
