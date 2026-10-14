@@ -310,80 +310,448 @@ function renderDeadlock() {
     `;
 }
 
+
 /********************************************************************
- * TRAFFIC MAP
+ * TRAFFIC MAP — PHASE 2
+ * Scalable top-down 2D city renderer
  ********************************************************************/
 
-function renderTrafficMap() {
+const MAP = {
+    padding: 85,
+    roadWidth: 44,
+    junctionRadius: 23,
+    zoom: 1
+};
 
+function renderTrafficMap() {
     if (!ui.canvas || !ui.ctx) return;
 
     const ctx = ui.ctx;
+    const canvas = ui.canvas;
 
-    ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+    const width = canvas.width;
+    const height = canvas.height;
 
+    if (width <= 0 || height <= 0) return;
+
+    // Always reset the transform before clearing.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    drawMapBackground(ctx, width, height);
+
+    const junctions = state.traffic.junctions || [];
+    if (!junctions.length) return;
+
+    // Calculate map boundaries from actual simulation coordinates.
+    const xs = junctions.map(j => j.x);
+    const ys = junctions.map(j => j.y);
+
+    const minX = Math.min(...xs) - MAP.padding;
+    const maxX = Math.max(...xs) + MAP.padding;
+    const minY = Math.min(...ys) - MAP.padding;
+    const maxY = Math.max(...ys) + MAP.padding;
+
+    const worldWidth = Math.max(1, maxX - minX);
+    const worldHeight = Math.max(1, maxY - minY);
+
+    const scale = Math.min(
+        width / worldWidth,
+        height / worldHeight
+    ) * MAP.zoom;
+
+    const offsetX = (width - worldWidth * scale) / 2;
+    const offsetY = (height - worldHeight * scale) / 2;
+
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+    ctx.translate(-minX, -minY);
+
+    drawCityBlocks(ctx, minX, minY, maxX, maxY);
     renderRoads(ctx);
     renderJunctions(ctx);
-    renderVehicles(ctx);
     renderMetro(ctx);
+    renderVehicles(ctx);
+
+    ctx.restore();
+
+    drawMapOverlay(ctx, width, height);
+}
+
+function drawMapBackground(ctx, width, height) {
+    const gradient = ctx.createLinearGradient(
+        0, 0, width, height
+    );
+
+    gradient.addColorStop(0, "#152c2b");
+    gradient.addColorStop(1, "#102320");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+}
+
+function drawCityBlocks(ctx, minX, minY, maxX, maxY) {
+    const cellSize = 100;
+
+    // Subtle ground grid.
+    ctx.strokeStyle = "rgba(186, 230, 207, 0.045)";
+    ctx.lineWidth = 1;
+
+    for (let x = Math.floor(minX / cellSize) * cellSize;
+         x <= maxX; x += cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, minY);
+        ctx.lineTo(x, maxY);
+        ctx.stroke();
+    }
+
+    for (let y = Math.floor(minY / cellSize) * cellSize;
+         y <= maxY; y += cellSize) {
+        ctx.beginPath();
+        ctx.moveTo(minX, y);
+        ctx.lineTo(maxX, y);
+        ctx.stroke();
+    }
+
+    // Decorative city blocks, not simulation obstacles.
+    const blocks = [
+        [310, 240, 120, 110],
+        [555, 240, 115, 115],
+        [810, 240, 120, 110],
+        [310, 560, 120, 100],
+        [560, 560, 110, 95],
+        [820, 560, 110, 95],
+        [80, 270, 85, 120],
+        [1070, 270, 70, 120]
+    ];
+
+    blocks.forEach(([x, y, w, h], index) => {
+        ctx.fillStyle = index % 3 === 0
+            ? "#21493b"
+            : "#1c3936";
+
+        ctx.fillRect(x, y, w, h);
+
+        ctx.strokeStyle = "#33534d";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+
+        // Small building footprints.
+        ctx.fillStyle = "#304d4b";
+        ctx.fillRect(x + 12, y + 12, w * 0.35, h * 0.34);
+        ctx.fillRect(x + w * 0.55, y + h * 0.5,
+                     w * 0.3, h * 0.3);
+    });
+}
+
+function drawRoadSegment(ctx, from, to) {
+    const x1 = from.x;
+    const y1 = from.y;
+    const x2 = to.x;
+    const y2 = to.y;
+
+    // Road shoulders.
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = "#65716f";
+    ctx.lineWidth = MAP.roadWidth + 10;
+    ctx.lineCap = "butt";
+    ctx.stroke();
+
+    // Asphalt.
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = "#303943";
+    ctx.lineWidth = MAP.roadWidth;
+    ctx.stroke();
+
+    // Dashed center line.
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = "#e4c96a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([13, 12]);
+    ctx.stroke();
+    ctx.setLineDash([]);
 }
 
 function renderRoads(ctx) {
+    const junctionMap = new Map(
+        (state.traffic.junctions || [])
+            .map(j => [j.id, j])
+    );
 
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 4;
-
-    state.traffic.roads.forEach(road => {
-
-        const from = state.traffic.junctions.find(j => j.id === road.from);
-        const to = state.traffic.junctions.find(j => j.id === road.to);
+    (state.traffic.roads || []).forEach(road => {
+        const from = junctionMap.get(road.from);
+        const to = junctionMap.get(road.to);
 
         if (!from || !to) return;
 
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
+        drawRoadSegment(ctx, from, to);
     });
+}
+
+function drawCrosswalk(ctx, x, y, horizontalRoad) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Stripes are drawn across the road.
+    if (!horizontalRoad) {
+        ctx.rotate(Math.PI / 2);
+    }
+
+    ctx.fillStyle = "rgba(245, 248, 250, 0.82)";
+
+    for (let i = -2; i <= 2; i++) {
+        ctx.fillRect(-18 + i * 8, -4, 5, 8);
+    }
+
+    ctx.restore();
 }
 
 function renderJunctions(ctx) {
+    const roads = state.traffic.roads || [];
+    const junctions = state.traffic.junctions || [];
 
-    state.traffic.junctions.forEach(junction => {
+    junctions.forEach(junction => {
+        const x = junction.x;
+        const y = junction.y;
+
+        // Intersection asphalt.
+        ctx.fillStyle = "#303943";
+        ctx.fillRect(
+            x - MAP.junctionRadius,
+            y - MAP.junctionRadius,
+            MAP.junctionRadius * 2,
+            MAP.junctionRadius * 2
+        );
+
+        // Determine connected road directions.
+        const connected = roads
+            .filter(r =>
+                r.from === junction.id ||
+                r.to === junction.id
+            )
+            .map(r => {
+                const otherId = r.from === junction.id
+                    ? r.to
+                    : r.from;
+
+                return junctions.find(j => j.id === otherId);
+            })
+            .filter(Boolean);
+
+        connected.forEach(other => {
+            const dx = other.x - x;
+            const dy = other.y - y;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                drawCrosswalk(
+                    ctx,
+                    x + Math.sign(dx) * 32,
+                    y,
+                    false
+                );
+            } else {
+                drawCrosswalk(
+                    ctx,
+                    x,
+                    y + Math.sign(dy) * 32,
+                    true
+                );
+            }
+        });
+
+        // Signal indicator.
+        const signalColor = junction.signal === "GREEN"
+            ? "#35e5a0"
+            : "#ff596c";
 
         ctx.beginPath();
-
-        ctx.fillStyle = junction.signal === "GREEN" ? "#00ff88" : "#ff4444";
-
-        ctx.arc(junction.x, junction.y, 16, 0, Math.PI * 2);
+        ctx.arc(x + 17, y - 17, 8, 0, Math.PI * 2);
+        ctx.fillStyle = "#0c1520";
         ctx.fill();
 
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px monospace";
-        ctx.fillText(junction.name, junction.x - 20, junction.y - 25);
+        ctx.beginPath();
+        ctx.arc(x + 17, y - 17, 5, 0, Math.PI * 2);
+        ctx.fillStyle = signalColor;
+        ctx.shadowColor = signalColor;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Location label.
+        ctx.font = "bold 13px Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const labelWidth = Math.max(
+            76,
+            ctx.measureText(junction.name).width + 20
+        );
+
+        const labelY = y - 55;
+
+        ctx.fillStyle = "rgba(10, 22, 32, 0.94)";
+        ctx.beginPath();
+        ctx.roundRect(
+            x - labelWidth / 2,
+            labelY - 12,
+            labelWidth,
+            24,
+            6
+        );
+        ctx.fill();
+
+        ctx.fillStyle = "#e9f5f4";
+        ctx.fillText(junction.name, x, labelY);
     });
 }
 
+function getVehicleColor(type) {
+    switch (type) {
+        case "BUS": return "#f6b94c";
+        case "AUTO": return "#4ade80";
+        case "AMBULANCE": return "#fb7185";
+        case "BIKE": return "#93c5fd";
+        case "SCOOTER": return "#c4b5fd";
+        default: return "#60a5fa";
+    }
+}
+
 function renderVehicles(ctx) {
+    const junctionMap = new Map(
+        (state.traffic.junctions || [])
+            .map(j => [j.id, j])
+    );
 
-    state.traffic.vehicles.forEach(vehicle => {
+    (state.traffic.vehicles || []).forEach(vehicle => {
+        if (!Number.isFinite(vehicle.x) ||
+            !Number.isFinite(vehicle.y)) return;
 
-        let color = "#3b82f6";
+        let angle = 0;
 
-        if (vehicle.type === "BUS") color = "#f59e0b";
-        if (vehicle.type === "AUTO") color = "#22c55e";
-        if (vehicle.type === "AMBULANCE") color = "#ef4444";
+        // Use the next route node to orient the vehicle.
+        const nextId = vehicle.route?.[0];
+        const nextNode = junctionMap.get(nextId);
 
-        ctx.fillStyle = color;
-        ctx.fillRect(vehicle.x - 4, vehicle.y - 4, 8, 8);
+        if (nextNode) {
+            angle = Math.atan2(
+                nextNode.y - vehicle.y,
+                nextNode.x - vehicle.x
+            );
+        }
+
+        const isBus = vehicle.type === "BUS";
+        const isBike = vehicle.type === "BIKE" ||
+                       vehicle.type === "SCOOTER";
+
+        const length = isBus ? 24 : isBike ? 10 : 16;
+        const breadth = isBus ? 11 : isBike ? 6 : 9;
+
+        ctx.save();
+        ctx.translate(vehicle.x, vehicle.y);
+        ctx.rotate(angle);
+
+        ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetY = 3;
+
+        ctx.fillStyle = getVehicleColor(vehicle.type);
+        ctx.beginPath();
+        ctx.roundRect(
+            -length / 2,
+            -breadth / 2,
+            length,
+            breadth,
+            3
+        );
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Windshield.
+        if (!isBike) {
+            ctx.fillStyle = "#b7e4fa";
+            ctx.fillRect(
+                length / 2 - 6,
+                -breadth / 2 + 2,
+                3,
+                breadth - 4
+            );
+        }
+
+        if (vehicle.type === "AMBULANCE") {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(-3, -1, 6, 2);
+            ctx.fillRect(-1, -3, 2, 6);
+        }
+
+        ctx.restore();
     });
 }
 
 function renderMetro(ctx) {
+    (state.traffic.metroStations || []).forEach(station => {
+        ctx.save();
 
-    state.traffic.metroStations?.forEach(station => {
+        ctx.fillStyle = "#a78bfa";
+        ctx.strokeStyle = "#e9d5ff";
+        ctx.lineWidth = 2;
 
-        ctx.fillStyle = "#a855f7";
-        ctx.fillRect(station.x, station.y, 12, 12);
+        ctx.beginPath();
+        ctx.roundRect(
+            station.x - 8,
+            station.y - 8,
+            16,
+            16,
+            4
+        );
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
     });
+}
+
+function drawMapOverlay(ctx, width, height) {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(8, 19, 28, 0.85)";
+    ctx.beginPath();
+    ctx.roundRect(12, 12, 196, 34, 8);
+    ctx.fill();
+
+    ctx.fillStyle = "#e5f5f1";
+    ctx.font = "bold 13px Segoe UI, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("PUNE • LIVE TRAFFIC", 24, 29);
+
+    // Legend.
+    const legendY = height - 19;
+
+    ctx.font = "11px Segoe UI, sans-serif";
+    ctx.fillStyle = "#35e5a0";
+    ctx.beginPath();
+    ctx.arc(18, legendY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#dce9e6";
+    ctx.fillText("Green", 28, legendY);
+
+    ctx.fillStyle = "#ff596c";
+    ctx.beginPath();
+    ctx.arc(94, legendY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#dce9e6";
+    ctx.fillText("Red", 104, legendY);
+
+    ctx.restore();
 }

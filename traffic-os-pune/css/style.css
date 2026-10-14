@@ -658,3 +658,21 @@ pre {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+
+/* Phase 2 — map presentation */
+
+.canvas-panel {
+    background: #102320;
+    isolation: isolate;
+}
+
+#trafficCanvas {
+    background: #102320;
+    cursor: default;
+}
+
+.canvas-panel:fullscreen {
+    background: #102320;
+}
