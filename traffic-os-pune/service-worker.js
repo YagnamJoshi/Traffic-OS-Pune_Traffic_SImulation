@@ -1,4 +1,4 @@
-const CACHE_NAME = "trafficos-v10";
+const CACHE_NAME = "trafficos-v12";
 
 const FILES_TO_CACHE = [
 
@@ -21,6 +21,8 @@ const FILES_TO_CACHE = [
     "./js/schedulerLab.js",
     "./js/memoryLab.js",
     "./js/ipcCenter.js",
+    "./js/deadlockCenter.js",
+    "./js/eventConsole.js",
     "./js/osConcepts.js"
 ];
 

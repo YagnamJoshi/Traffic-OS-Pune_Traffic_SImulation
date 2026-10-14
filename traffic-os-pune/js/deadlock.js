@@ -239,38 +239,85 @@ export function requestLock(pid, resourceId) {
     return false;
 }
 
+
+function grantWaitingLocks() {
+    let changed = true;
+
+    while (changed) {
+        changed = false;
+
+        for (const request of [...state.deadlock.waitFor]) {
+            const { pid, waitingFor: resourceId } = request;
+
+            if (state.deadlock.locks[resourceId]) continue;
+
+            state.deadlock.waitFor =
+                state.deadlock.waitFor.filter(
+                    w => !(w.pid === pid &&
+                           w.waitingFor === resourceId)
+                );
+
+            if (requestLock(pid, resourceId)) {
+                changed = true;
+            }
+        }
+    }
+}
+
 export function releaseLock(pid, resourceId) {
+    if (state.deadlock.locks[resourceId] !== pid) {
+        return false;
+    }
 
-    if (state.deadlock.locks[resourceId] === pid) {
+    delete state.deadlock.locks[resourceId];
 
-        delete state.deadlock.locks[resourceId];
+    generateEvent(
+        "DEADLOCK",
+        pid,
+        `${pid} released ${resourceId}`,
+        "Resource returned to the lock pool.",
+        "Resource Deallocation"
+    );
 
-        generateEvent(
-            "DEADLOCK",
-            pid,
-            `${pid} released lock ${resourceId}`,
-            "Resource returned to pool.",
-            "Resource Deallocation"
-        );
+    grantWaitingLocks();
+    return true;
+}
+
+export function releaseAllLocks(pid) {
+    let released = 0;
+
+    for (const resourceId of Object.keys(state.deadlock.locks)) {
+        if (state.deadlock.locks[resourceId] === pid) {
+            delete state.deadlock.locks[resourceId];
+            released++;
+        }
     }
 
     state.deadlock.waitFor =
         state.deadlock.waitFor.filter(w => w.pid !== pid);
+
+    grantWaitingLocks();
+
+    return released;
 }
 
-export function releaseAllLocks(pid) {
 
-    Object.keys(state.deadlock.locks).forEach(resource => {
+export function resetDeadlockLab() {
+    state.deadlock.locks = {};
+    state.deadlock.waitFor = [];
+    state.deadlock.detected = false;
+    state.deadlock.cycle = [];
+    state.deadlock.detectedAt = null;
 
-        if (state.deadlock.locks[resource] === pid) {
-
-            delete state.deadlock.locks[resource];
-        }
-    });
-
-    state.deadlock.waitFor =
-        state.deadlock.waitFor.filter(w => w.pid !== pid);
+    generateEvent(
+        "DEADLOCK",
+        "Deadlock Lab",
+        "Deadlock resource state reset",
+        "All simulated locks and waiting requests cleared.",
+        "Resource Management"
+    );
 }
+
 
 /*******************************************************************
  * DETECTION + RECOVERY
@@ -304,6 +351,12 @@ export function detectDeadlock() {
         state.deadlock.cycle = [];
         state.deadlock.detectedAt = null;
     }
+}
+
+export function inspectDeadlockCycle() {
+    const cycle = findCycle();
+
+    return cycle ? [...cycle] : [];
 }
 
 export function resolveDeadlock() {
@@ -346,12 +399,25 @@ export function resolveDeadlock() {
  *******************************************************************/
 
 export function triggerDeadlockScenario() {
+    resetDeadlockLab();
 
     requestLock("P01", "P01");
     requestLock("P02", "P02");
+
     requestLock("P01", "P02");
     requestLock("P02", "P01");
+
+    detectDeadlock();
+
+    generateEvent(
+        "DEADLOCK",
+        "Deadlock Lab",
+        "Two-process circular-wait scenario executed",
+        "P01 requests P02's resource while P02 requests P01's resource.",
+        "Deadlock Demonstration"
+    );
 }
+
 
 /*******************************************************************
  * TICK
@@ -389,13 +455,33 @@ export function deadlockTick() {
  * UI SNAPSHOT
  *******************************************************************/
 
+
 export function getDeadlockInfo() {
+    const locks = { ...state.deadlock.locks };
+
+    const waitFor = state.deadlock.waitFor.map(
+        request => ({ ...request })
+    );
+
+    const edges = waitFor
+        .filter(request => locks[request.waitingFor])
+        .map(request => ({
+            from: request.pid,
+            to: locks[request.waitingFor],
+            resource: request.waitingFor
+        }));
 
     return {
         mode: state.deadlock.mode,
         detected: state.deadlock.detected,
-        cycle: state.deadlock.cycle,
-        locks: state.deadlock.locks,
-        waitFor: state.deadlock.waitFor
+        cycle: [...state.deadlock.cycle],
+        locks,
+        waitFor,
+        edges,
+        resources: [...LOCKABLE_RESOURCES],
+        detectedCount:
+            state.statistics.deadlocksDetected || 0,
+        resolvedCount:
+            state.statistics.deadlocksResolved || 0
     };
 }
