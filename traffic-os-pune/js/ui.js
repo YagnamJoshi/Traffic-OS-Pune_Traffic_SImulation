@@ -26,7 +26,14 @@ export function initializeUI() {
     resizeCanvas();
 
     window.addEventListener("resize", resizeCanvas);
+    document.addEventListener("fullscreenchange", () => setTimeout(resizeCanvas, 50));
+
+    if (ui.canvas && "ResizeObserver" in window) {
+        new ResizeObserver(resizeCanvas).observe(ui.canvas);
+    }
 }
+
+
 
 function cacheElements() {
 
@@ -43,13 +50,28 @@ function cacheElements() {
     ui.ipcQueue = document.getElementById("ipcQueue");
 }
 
+
 function resizeCanvas() {
+  const canvas = document.getElementById("trafficCanvas");
 
-    if (!ui.canvas) return;
+  if (!canvas) return;
 
-    ui.canvas.width = ui.canvas.clientWidth;
-    ui.canvas.height = ui.canvas.clientHeight;
+  const bounds = canvas.getBoundingClientRect();
+
+  const width = Math.max(1, Math.round(bounds.width));
+  const height = Math.max(1, Math.round(bounds.height));
+
+  // Avoid resetting the canvas unnecessarily.
+  // Changing canvas.width or canvas.height clears its contents.
+  if (canvas.width !== width) {
+    canvas.width = width;
+  }
+
+  if (canvas.height !== height) {
+    canvas.height = height;
+  }
 }
+
 
 /********************************************************************
  * MAIN RENDER

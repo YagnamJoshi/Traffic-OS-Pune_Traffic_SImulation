@@ -68,8 +68,11 @@ function initializeNavigation() {
 function switchPage(pageName) {
 
     document.querySelectorAll(".page").forEach(page => {
-
         page.classList.remove("active");
+    });
+
+    document.querySelectorAll(".sidebar [data-page]").forEach(b => {
+        b.classList.toggle("active", b.dataset.page === pageName);
     });
 
     const page = document.getElementById(`page-${pageName}`);
@@ -100,6 +103,19 @@ function initializeControls() {
     if (btnDeadlock) btnDeadlock.addEventListener("click", triggerDeadlockScenario);
     if (btnFailure) btnFailure.addEventListener("click", triggerFailureScenario);
     if (btnRushHour) btnRushHour.addEventListener("click", triggerRushHour);
+        const btnFullscreen = document.getElementById("btnFullscreen");
+
+    if (btnFullscreen) {
+        btnFullscreen.addEventListener("click", () => {
+            const panel = document.querySelector(".canvas-panel");
+            if (!panel) return;
+            if (document.fullscreenElement) document.exitFullscreen();
+            else panel.requestFullscreen?.();
+        });
+    }
+
+    // highlight the default page in the sidebar
+    document.querySelector('.sidebar [data-page="simulation"]')?.classList.add("active");
 }
 
 /********************************************************************
