@@ -345,34 +345,27 @@ export function allocateMemory(
  * RELEASE MEMORY
  *****************************************************************/
 
-export function releaseMemory(pid) {
 
+export function releaseMemory(pid) {
     let releaseCount = 0;
 
-    state.memory.blocks.forEach(
-        block => {
+    for (const block of state.memory.blocks) {
+        if (block.owner !== pid) continue;
 
-            if (
-                block.owner === pid
-            ) {
+        block.occupied = false;
+        block.owner = null;
+        block.color = "#1a1f3a";
+        releaseCount++;
+    }
 
-                block.occupied =
-                    false;
+    if (releaseCount === 0) return 0;
 
-                block.owner =
-                    null;
+    state.memory.allocations =
+        state.memory.allocations.filter(
+            allocation => allocation.pid !== pid
+        );
 
-                block.color =
-                    "#1a1f3a";
-
-                releaseCount++;
-            }
-        }
-    );
-
-    state.statistics
-        .memoryReleases++;
-
+    state.statistics.memoryReleases++;
     state.memory.releases++;
 
     updateMemoryStats();
@@ -387,6 +380,7 @@ export function releaseMemory(pid) {
 
     return releaseCount;
 }
+
 
 /*****************************************************************
  * PROCESS MEMORY LOOKUP
@@ -445,52 +439,54 @@ export function createMemoryPressure() {
  * COMPACT MEMORY
  *****************************************************************/
 
+
 export function compactMemory() {
+    const usedBlocks = state.memory.blocks
+        .filter(block => block.occupied);
 
-    const usedBlocks =
-        state.memory.blocks.filter(
-            b => b.occupied
-        );
+    const total = state.memory.totalBlocks;
 
-    const newBlocks = [];
-
-    for (
-        let i = 0;
-        i <
-        state.memory.totalBlocks;
-        i++
-    ) {
-
-        newBlocks.push({
-
-            index: i,
-
+    state.memory.blocks = Array.from(
+        { length: total },
+        (_, index) => ({
+            index,
             occupied: false,
-
             owner: null,
-
             color: "#1a1f3a"
-        });
-    }
-
-    usedBlocks.forEach(
-        (block, index) => {
-
-            newBlocks[index] = {
-
-                index,
-
-                occupied: true,
-
-                owner: block.owner,
-
-                color: block.color
-            };
-        }
+        })
     );
 
-    state.memory.blocks =
-        newBlocks;
+    usedBlocks.forEach((block, index) => {
+        state.memory.blocks[index] = {
+            index,
+            occupied: true,
+            owner: block.owner,
+            color: block.color
+        };
+    });
+
+    // Reconstruct allocation records from the new
+    // physical positions after compaction.
+    const groups = new Map();
+
+    for (const block of state.memory.blocks) {
+        if (!block.occupied) continue;
+
+        if (!groups.has(block.owner)) {
+            groups.set(block.owner, []);
+        }
+
+        groups.get(block.owner).push(block.index);
+    }
+
+    state.memory.allocations = [...groups].map(
+        ([pid, blocks]) => ({
+            pid,
+            blocks,
+            size: blocks.length,
+            simulationTime: state.simulationTime
+        })
+    );
 
     updateMemoryStats();
 
@@ -498,7 +494,7 @@ export function compactMemory() {
         "MEMORY",
         "MemoryManager",
         "Memory compaction completed.",
-        "Free space consolidated into one large block.",
+        "Occupied blocks packed together; free space consolidated.",
         "Fragmentation Reduction"
     );
 }
@@ -538,24 +534,25 @@ export function allocateEmergencyMemory() {
  * MEMORY LAB
  *****************************************************************/
 
-export function createMemoryLabProcess(
-    pid,
-    size
-) {
 
-    allocateMemory(
-        pid,
-        size
-    );
+export function createMemoryLabProcess(pid, size) {
+    const success = allocateMemory(pid, size);
 
     generateEvent(
         "LAB",
         pid,
-        "Memory lab allocation.",
-        `Created ${size} block process.`,
+        success
+            ? "Memory lab allocation successful."
+            : "Memory lab allocation failed.",
+        success
+            ? `Allocated ${size} contiguous blocks.`
+            : `Could not allocate ${size} contiguous blocks.`,
         "Memory Lab"
     );
+
+    return success;
 }
+
 
 /*****************************************************************
  * MEMORY SNAPSHOT
